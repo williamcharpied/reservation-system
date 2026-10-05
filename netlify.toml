@@ -1,5 +1,5 @@
 [build]
   functions = "netlify/functions"
 
-[functions."square-proxy"]
+[functions."booking-api"]
   timeout = 20

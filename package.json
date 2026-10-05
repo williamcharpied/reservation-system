@@ -1,0 +1,9 @@
+{
+  "name": "reservation-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Appointment booking system for Amour Nail Studio",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

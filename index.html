@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book an Appointment · Mona Liza Nails</title>
+<title>Book an Appointment · Amour Nail Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -49,13 +49,6 @@
   .salon-header {
     text-align: center;
     padding: 2rem 0 2.5rem;
-  }
-  .salon-logo {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 1rem;
-    border: 1px solid var(--border);
   }
   .salon-name {
     font-family: 'Cormorant Garamond', serif;
@@ -182,32 +175,6 @@
   .addon-name { font-size: 14px; font-weight: 500; margin-bottom: 1px; }
   .addon-dur-tag { font-size: 12px; color: var(--ink-faint); }
   .addon-price-tag { font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; }
-
-  /* Staff */
-  .staff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .staff-card {
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    text-align: center;
-    transition: border-color 0.15s, background 0.15s;
-    background: var(--warm-white);
-    user-select: none;
-  }
-  .staff-card:hover { border-color: var(--ink-muted); }
-  .staff-card.selected { border-color: var(--ink); background: var(--cream); }
-  .staff-avatar {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--accent-light);
-    color: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 500;
-    margin: 0 auto 10px;
-  }
-  .staff-name-tag { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
-  .staff-role-tag { font-size: 12px; color: var(--ink-faint); }
 
   /* Date strip */
   .date-strip {
@@ -400,7 +367,6 @@
 
   @media (max-width: 400px) {
     .slot-grid { grid-template-columns: repeat(3, 1fr); }
-    .staff-grid { grid-template-columns: 1fr; }
   }
 
   /* Policy card */
@@ -521,10 +487,7 @@
 <div class="page-wrap">
 
   <header class="salon-header">
-    <img class="salon-logo"
-      src="https://square-web-production-f.squarecdn.com/files/47a0eae142a374dd38357b247e73afde8971cf55/original.png"
-      onerror="this.style.display='none'" alt="Mona Liza Nails">
-    <div class="salon-name">Mona Liza Nails</div>
+    <div class="salon-name">Amour Nail Studio</div>
     <div class="salon-sub">1514 W Ardmore Ave · Chicago, IL</div>
   </header>
 
@@ -533,118 +496,51 @@
   <main id="main"></main>
 
   <footer class="page-footer">
-    Mona Liza Nails &nbsp;·&nbsp; (773) 543-6527 &nbsp;·&nbsp; bookings@monalizanails.com
+    Amour Nail Studio &nbsp;·&nbsp; (773) 543-6527 &nbsp;·&nbsp; bookings@monalizanails.com
   </footer>
 </div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-// IMPORTANT: Replace this with your actual Square access token.
-// For production, call your own backend instead of putting the token here.
-// Square location ID (not secret — safe to keep here)
-const LOC_ID = "L3KS6XGBN12GV";
-// Proxy base — Netlify function that forwards requests to Square with your token server-side
-const PROXY_BASE = "/.netlify/functions/square-proxy";
+// Netlify function that handles availability, bookings, manage links and staff tools.
+const API_BASE = "/.netlify/functions/booking-api";
+
+// Opening hours. Keep in sync with the hardcoded availability in
+// netlify/functions/booking-api.js (the server enforces it).
+const OPEN_DAYS = [0, 1];                                  // Sunday, Monday
+const HOURS_TEXT = "Sundays and Mondays, 10 AM – 6 PM";
+const BOOKING_WINDOW_DAYS = 60;
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const SERVICES = [
-  { id:"WDCGCQRNBAS3I35KKKV3UK4I", varId:"K4JV26YCYUHTRBLKSMWTXMWX", varVer:1775268899665, name:"Regular Manicure",   price:5000,  dur:2700000, cat:"Manicure", priceDisplay:"$50",
-    desc:"Nail shaping, buffing, and cuticle exfoliation using the Russian-style e-file technique, finished with cuticle oil and lotion. Clean, precise, and polished." },
-  { id:"ER7GTM3MORQS3PRPKWUL6ZJ6", varId:"7SDV2IJL2BLUCISZXP4GWY7F", varVer:1775268899665, name:"Gel Manicure",       price:8000,  dur:5400000, cat:"Manicure", priceDisplay:"$80–$90",  durDisplay:"1h 30m–1h 40m",
+  { id:"regular-manicure", name:"Regular Manicure", price:3500, dur:2100000, cat:"Manicure", priceDisplay:"$35",
+    desc:"Nail shaping, buffing, and cuticle exfoliation using the Russian-style e-file technique, finished with cuticle oil and lotion. Clean, precise, no polish." },
+  { id:"russian-manicure", name:"Russian Manicure", price:7500, dur:5400000, cat:"Manicure", priceDisplay:"$75",
     desc:"Nail shaping, buffing, and cuticle exfoliation using the Russian Manicure technique, topped with a gel overlay with strengthening for a long-lasting, glossy finish." },
-  { id:"LWNX6XUBJ3IPU4MES2E2NG5T", varId:"W3QQQ2II4UQJH4XLMCOFIZGI", varVer:1775268899665, name:"Gel Refill",         price:8600,  dur:6000000, cat:"Manicure", priceDisplay:"$86",
-    desc:"Maintain your existing gel extensions with a fresh fill at the growth area, rebalancing and resurfacing for a seamless, like-new look. Includes cuticle care and gel overlay." },
-  { id:"YCAIWAJ6HO57TP25J46K64KE", varId:"EQNK6K7KT2DDPE4PSI2SOQLW", varVer:1775268899665, name:"Gel Extensions",     price:10000, dur:6600000, cat:"Manicure", priceDisplay:"$100–$115", durDisplay:"1h 50m–2h",
+  { id:"gel-extensions", name:"Gel Extensions", price:10000, dur:6600000, cat:"Manicure", priceDisplay:"$100–$120", durDisplay:"1h 50m–2h",
     desc:"Custom length extensions sculpted using upper or paper forms, finished with a durable gel overlay. Includes Russian-style cuticle exfoliation for a clean, strong foundation." },
-  { id:"7HLOBJK55ABNMK2SN5Q67MAS", varId:"2TNKDCWB76QDKB4HMMCK5UYC", varVer:1775268899665, name:"Wedding Manicure",   price:14000, dur:7200000, cat:"Manicure", priceDisplay:"$140",
-    desc:"Our signature Russian e-file manicure for your big day. Includes nail shaping, gentle cuticle care, buffing, and structured gel polish in a solid color of your choice. We add 30 extra minutes to perfect every detail — because your nails should be exactly as you envisioned." },
-  { id:"7WV4UEQK425UTIS7UX2D4DW6", varId:"XD2BAWLGCM6I7WTLP7O66FNP", varVer:1775268899665, name:"Regular Pedicure",   price:6500,  dur:3600000, cat:"Pedicure", priceDisplay:"$65",
-    desc:"Waterless Smart/Dry Pedicure with Dazzle Dry Regular Polish. Nail cutting, shaping, buffing, Russian-style cuticle exfoliation, callus exfoliation with a podo disc, and lotion — all without soaking." },
-  { id:"NRWENILEXHKYJZSQVQYBODGR", varId:"3CQP4R2I47J6KZS57R4IEMZ5", varVer:1775268899665, name:"Gel Pedicure",       price:8000,  dur:4200000, cat:"Pedicure", priceDisplay:"$80",
-    desc:"Waterless Smart/Dry Pedicure with a long-lasting gel polish finish. Includes nail shaping, Russian-style cuticle exfoliation, callus exfoliation with a podo disc, and lotion — precision care without soaking." },
-  { id:"LHX4HWOIR6SMBOYMHKUJQ6E2", varId:"GOJ6HBQZXUGZHXQWMUWTUFZG", varVer:1775268899665, name:"Deluxe Pedicure",    price:10000, dur:4800000, cat:"Pedicure", priceDisplay:"$100",
-    desc:"Our most detailed waterless pedicure with extra time for heel and callus work. Uses a SMART disk system with disposable files to safely smooth rough, dry skin. Includes full toenail care, cuticle cleaning, and thorough foot exfoliation for a lasting, polished result." },
 ];
 
 const ADDONS = [
-  { id:"adn1", modId:"SIKTHHNWQXCSLOWAXQ5BWTYX", varId:null, name:"Gel Removal",                price:2000, dur:1200000, group:"removal",
+  { id:"gel-removal", name:"Gel Removal", price:2000, dur:1200000, group:"removal",
     desc:"Safe, gentle removal of existing gel polish using professional techniques — no harsh scraping or damage to the natural nail." },
-  { id:"adn2", modId:"ZNK43PP3XUKCSQ2T5U24R3FS", varId:null, name:"Acrylics/Dip/GelX Removal",  price:2500, dur:1500000, group:"removal",
+  { id:"acrylic-removal", name:"Acrylics/Dip/GelX Removal", price:2000, dur:1500000, group:"removal",
     desc:"Professional removal of acrylic, dip powder, or GelX enhancements, with extra care to preserve the health and integrity of your natural nails." },
-  { id:"adn3", modId:"RR5MJ3RM6QCJUGC5RSQPMTYX", varId:"ZHUUBI3MTCUIBC2USV7ZATA4", name:"Nail Art – Level 1", price:1500, dur:600000, group:"art",
+  { id:"art-1", name:"Nail Art – Level 1", price:1000, dur:600000, group:"art",
     desc:"Chrome powder, cat eye polish, simple dots, lines and swirls, or foil accents. Perfect for a subtle, elevated touch." },
-  { id:"adn4", modId:"ULBTATFPOE6DWG4ZER3XDIOE", varId:"7S4G4XJ23MK5LKWJPLYVQHBO", name:"Nail Art – Level 2", price:3000, dur:1200000, group:"art",
+  { id:"art-2", name:"Nail Art – Level 2", price:1500, dur:900000, group:"art",
     desc:"French tips, double French, ombre gradients, simple florals, or hearts. Classic and polished statement nails." },
-  { id:"adn5", modId:"RDQMJVIFHE3LTARY2VXYDJ5E", varId:"SN6CX4LUU2VLRQ67BHOQJ3TI", name:"Nail Art – Level 3", price:4500, dur:1800000, group:"art",
+  { id:"art-3", name:"Nail Art – Level 3", price:2500, dur:1500000, group:"art",
     desc:"Stamping, nail sliders, rhinestones and stones, plus hand-painted designs for a more detailed, custom look." },
-  { id:"adn6", modId:"UAQCTJXUKXWW4SOOZ662UTJF", varId:"EYQBVVMBTCGBOOHYIE3NQLTD", name:"Nail Art – Level 4", price:6000, dur:2400000, group:"art",
-    desc:"3D elements, mixed techniques, and intricate hand painting. For clients who want truly eye-catching, artistic nails." },
-  { id:"adn7", modId:"HTXIW23JEZ5EUZ3ANVS3UVR5", varId:"DLBO6MXEDDKHFLG3SOTHTMOK", name:"Nail Art – Level 5", price:7500, dur:3000000, group:"art",
-    desc:"Fully custom designs on every nail — 3D heavy elements, extreme length, and editorial-level nail art. Our most creative and time-intensive offering." },
-  { id:"len-gel-med", modId:"", name:"Medium", price:8000, dur:5400000, group:"gel-length",
-    desc:"Medium length gel manicure — a versatile, everyday length that's strong, elegant, and easy to maintain." },
-  { id:"len-gel-lng", modId:"", name:"Long",   price:9000, dur:6000000, group:"gel-length",
-    desc:"Long length gel manicure — a bold, glamorous look with extra length and a flawless gel finish." },
-  { id:"len-ext-med", modId:"", name:"Medium", price:10000, dur:6600000, group:"ext-length",
-    desc:"Medium length sculpted gel extensions — a refined, balanced length that's sturdy and polished for everyday wear." },
-  { id:"len-ext-lng", modId:"", name:"Long",   price:11500, dur:7200000, group:"ext-length",
-    desc:"Long length sculpted gel extensions — dramatic, statement-making length sculpted to perfection." },
 ];
 
-let TEAM = [
-  { id:"ANY", name:"No preference", role:"First available tech", initials:"✦", isAny: true },
-];
-
-async function loadTeamMembers() {
-  try {
-    const r = await fetch(PROXY_BASE + "?path=/v2/bookings/team-members");
-    const data = await r.json();
-    const members = (data.members || []).map(m => {
-      // Derive initials from name (e.g. "Yelyzaveta Surname" → "YS", "William" → "W")
-      const parts = m.name.trim().split(/\s+/);
-      const initials = parts.length >= 2
-        ? parts[0][0].toUpperCase() + parts[parts.length-1][0].toUpperCase()
-        : parts[0].slice(0,2).toUpperCase();
-      return {
-        id:       m.id,
-        name:     m.name,
-        role:     "Nail Tech",
-        initials: initials,
-        isAny:    false,
-      };
-    });
-    // Replace TEAM keeping "No preference" first
-    TEAM = [TEAM[0], ...members];
-  } catch(e) {
-    console.error("Failed to load team members:", e.message);
-    // Keep whatever is in TEAM (just "No preference" as fallback)
-  }
-}
-
-const STEPS = ["Service","Add-ons","Nail tech","Date & time","Confirm"];
-
-// ─── TECH ELIGIBILITY CACHE ─────────────────────────────────────────────────
-let _techEligibilityCache = null; // { teamMemberId: [serviceVariationId, ...] }
-
-async function getTechEligibility() {
-  if (_techEligibilityCache) return _techEligibilityCache;
-  try {
-    const r = await fetch(PROXY_BASE + "?path=/v2/bookings/team-service-eligibility");
-    const data = await r.json();
-    _techEligibilityCache = data.eligibility || {};
-  } catch(e) {
-    console.error("Eligibility cache error:", e.message);
-    _techEligibilityCache = {};
-  }
-  return _techEligibilityCache;
-}
+const STEPS = ["Service","Add-ons","Date & time","Confirm"];
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const S = {
   step: 1,
   service: null,
   addons: [],
-  staff: null,
   date: null,       // { iso, label }
   slot: null,       // { startAt ISO string, label }
   slots: [],
@@ -654,8 +550,6 @@ const S = {
   submitting: false,
   formError: null,
   bookingId: null,
-  eligibleTechIds: null,   // null = not loaded yet, [] = none found
-  loadingTechs: false,
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -667,35 +561,18 @@ function fmtDur(ms) {
   const h = Math.floor(m/60), rm = m%60;
   return h + "h" + (rm ? " " + rm + "m" : "");
 }
-function isLengthService(svc) { return svc && (svc.id === "ER7GTM3MORQS3PRPKWUL6ZJ6" || svc.id === "YCAIWAJ6HO57TP25J46K64KE"); }
-function getLengthGroup(svc) {
-  if (!svc) return null;
-  if (svc.id === "ER7GTM3MORQS3PRPKWUL6ZJ6") return "gel-length";
-  if (svc.id === "YCAIWAJ6HO57TP25J46K64KE") return "ext-length";
-  return null;
-}
-function selectedLength() {
-  if (!S.service) return null;
-  const grp = getLengthGroup(S.service);
-  if (!grp) return null;
-  return S.addons.find(a => a.group === grp) || null;
-}
 function totalPrice() {
   if (!S.service) return 0;
-  const lenAddon = selectedLength();
-  const basePrice = lenAddon ? lenAddon.price : S.service.price;
-  const otherAddons = S.addons.filter(a => a.group !== "gel-length" && a.group !== "ext-length");
-  return basePrice + otherAddons.reduce((a,x)=>a+x.price,0);
+  return S.service.price + S.addons.reduce((a,x)=>a+x.price,0);
+}
+// Gel Extensions are priced as a range, so the total is shown as "from" pricing
+function totalDisplay() {
+  const ranged = S.service && S.service.priceDisplay && S.service.priceDisplay.includes("–");
+  return fmt(totalPrice()) + (ranged ? "+" : "");
 }
 function totalDurMs()  {
   if (!S.service) return 0;
-  const lenAddon = selectedLength();
-  const baseDur = lenAddon ? lenAddon.dur : S.service.dur;
-  const otherAddons = S.addons.filter(a => a.group !== "gel-length" && a.group !== "ext-length");
-  // Wedding Manicure: Level 1 nail art is included, add its duration even if not in addons
-  const isWedding = S.service.id === "7HLOBJK55ABNMK2SN5Q67MAS";
-  const weddingIncludedDur = isWedding && !otherAddons.find(a=>a.group==="art") ? (ADDONS.find(a=>a.id==="adn3")?.dur || 0) : 0;
-  return baseDur + otherAddons.reduce((a,x)=>a+x.dur,0) + weddingIncludedDur;
+  return S.service.dur + S.addons.reduce((a,x)=>a+x.dur,0);
 }
 function totalDurMin() { return Math.round(totalDurMs()/60000); }
 
@@ -740,40 +617,49 @@ function getCancellationPolicy(slotStartAt) {
   };
 }
 
-function getDates() {
+function localIso(d) {
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+// Bookable dates: open days only, starting `startOffset` days from today
+function getDates(startOffset = 0) {
   const days=[], DAY=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
         MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  for (let i=0; i<60; i++) {
+  for (let i=startOffset; i<BOOKING_WINDOW_DAYS; i++) {
     const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+i);
-    const iso = d.toISOString().slice(0,10);
-    days.push({ iso, day: DAY[d.getDay()], num: d.getDate(), mon: MON[d.getMonth()], obj: d });
+    if (!OPEN_DAYS.includes(d.getDay())) continue;
+    days.push({ iso: localIso(d), day: DAY[d.getDay()], num: d.getDate(), mon: MON[d.getMonth()], obj: d });
   }
   return days;
 }
 
+// Slot times are always shown in salon time (Chicago)
 function fmtSlotLabel(isoStr) {
-  const d = new Date(isoStr);
-  let h = d.getHours(), m = d.getMinutes();
-  const ampm = h < 12 ? "am" : "pm";
-  h = h > 12 ? h-12 : h;
-  return h + ":" + String(m).padStart(2,"0") + ampm;
+  return new Date(isoStr).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" })
+    .replace(/\s/g, "").toLowerCase();
 }
 
-// ─── SQUARE API (via Netlify proxy — token stays server-side) ────────────────
-async function squarePost(path, body) {
-  const r = await fetch(PROXY_BASE + "?path=/v2" + path, {
+// ─── API (Netlify function) ──────────────────────────────────────────────────
+async function apiPost(path, body) {
+  const r = await fetch(API_BASE + "?path=" + encodeURIComponent(path), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
-  if (!r.ok && r.status !== 400) {
-    throw new Error("Proxy returned " + r.status);
-  }
   return r.json();
 }
+async function apiGet(path) {
+  try {
+    const r = await fetch(API_BASE + "?path=" + encodeURIComponent(path));
+    return await r.json();
+  } catch(e) {
+    return { error: "That lookup isn't available. Please use the link in your confirmation email or call us at (773) 543-6527." };
+  }
+}
 
-// Calls Square's real availability search for the chosen date, service, and staff
+// Asks the server which times are open on the chosen date for this appointment length
 async function fetchSlots() {
+  const reqDate = S.date.iso;
   S.loadingSlots = true;
   S.slots = [];
   S.slotsError = null;
@@ -781,63 +667,12 @@ async function fetchSlots() {
   render();
 
   try {
-    const startIso = S.date.iso + "T00:00:00-05:00";
-    const endIso   = S.date.iso + "T23:59:59-05:00";
-
-    // Determine the correct service variation ID
-    let searchVarId = S.service.varId;
-    if (S.service.id === "ER7GTM3MORQS3PRPKWUL6ZJ6") {
-      const la = S.addons.find(a=>a.group==="gel-length");
-      if (la?.id === "len-gel-lng") searchVarId = "G6MRNPSK7B337XARUH2IRRUE";
-    }
-    if (S.service.id === "YCAIWAJ6HO57TP25J46K64KE") {
-      const la = S.addons.find(a=>a.group==="ext-length");
-      if (la?.id === "len-ext-lng") searchVarId = "FRG33AOU6QQCRV2NKP6PZN2O";
-    }
-
-    const endLimit = new Date(S.date.iso + "T17:00:00-05:00").getTime();
-    const realTechs = TEAM.filter(t => !t.isAny);
-
-    // For ANY: fetch all techs in a single call (Square supports multiple team_member_ids)
-    // If no eligible techs, skip the search entirely — no slots available
-    if (S.staff.isAny && S.eligibleTechIds !== null && S.eligibleTechIds.length === 0) {
-      S.slots = [];
-      S.loadingSlots = false;
-      render();
-      return;
-    }
-    const teamIds = S.staff.isAny
-      ? (S.eligibleTechIds && S.eligibleTechIds.length > 0 ? S.eligibleTechIds : realTechs.map(t => t.id))
-      : [S.staff.id];
-
-    const body = {
-      query: {
-        filter: {
-          location_id: LOC_ID,
-          start_at_range: { start_at: startIso, end_at: endIso },
-          segment_filters: [{
-            service_variation_id: searchVarId,
-            team_member_id_filter: { any: teamIds }
-          }]
-        }
-      }
-    };
-
-    const data = await squarePost("/bookings/availability/search", body);
-
-    if (data.errors && data.errors.length > 0) {
-      S.slotsError = data.errors.map(e => e.detail || e.code).join(" · ");
-    } else {
-      const seen = new Set();
-      S.slots = (data.availabilities || []).filter(a => {
-        const start = new Date(a.start_at).getTime();
-        if ((start + totalDurMs()) > endLimit) return false;
-        if (seen.has(a.start_at)) return false;
-        seen.add(a.start_at);
-        return true;
-      });
-    }
+    const data = await apiPost("/availability", { date: reqDate, durationMinutes: totalDurMin() });
+    if (S.date?.iso !== reqDate) return;   // a newer date was picked meanwhile
+    if (data.error) S.slotsError = data.error;
+    else S.slots = data.slots || [];
   } catch(e) {
+    if (S.date?.iso !== reqDate) return;
     S.slotsError = "Could not load availability. Please try again.";
   }
 
@@ -845,98 +680,35 @@ async function fetchSlots() {
   render();
 }
 
-// Creates the booking in Square
+// Creates the booking
 async function createBooking() {
   S.submitting = true;
   S.formError = null;
   render();
 
-  // Determine the actual service variation to book (length services use length addon's mapping)
-  let bookVarId = S.service.varId;
-  let bookVarVer = S.service.varVer;
-  if (S.service.id === "ER7GTM3MORQS3PRPKWUL6ZJ6") {
-    // Gel Manicure: Medium uses original varId, Long uses the Long varId
-    const lenAddon = S.addons.find(a=>a.group==="gel-length");
-    if (lenAddon?.id === "len-gel-lng") {
-      bookVarId = "G6MRNPSK7B337XARUH2IRRUE"; // Gel Manicure Long varId
-    }
-  }
-  if (S.service.id === "YCAIWAJ6HO57TP25J46K64KE") {
-    // Gel Extensions: Medium uses original varId, Long uses the Long varId
-    const lenAddon = S.addons.find(a=>a.group==="ext-length");
-    if (lenAddon?.id === "len-ext-lng") {
-      bookVarId = "FRG33AOU6QQCRV2NKP6PZN2O"; // Gel Extensions Long varId
-    }
-  }
-
-  // For ANY preference, use the first available real tech from TEAM
-  const bookingTeamId = S.staff.isAny
-    ? TEAM.filter(t => !t.isAny)[0].id
-    : S.staff.id;
-
-  const addonNote = S.addons.filter(a=>a.group!=="gel-length"&&a.group!=="ext-length").length
-    ? "Add-ons: " + S.addons.filter(a=>a.group!=="gel-length"&&a.group!=="ext-length").map(a=>a.name).join(", ")
-    : "";
-
   try {
-    // First, find or create the customer
-    let customerId = null;
-    try {
-      // Ask proxy to find or create customer (deduplicates via Google Sheet)
-      const custResult = await squarePost("/customers/find-or-create", {
-        name:  S.name,
-        email: S.email,
-      });
-      if (custResult.customerId) customerId = custResult.customerId;
-    } catch(e) { /* customer lookup optional */ }
+    const data = await apiPost("/bookings", {
+      startAt: S.slot.startAt,
+      durationMinutes: totalDurMin(),
+      service: { id: S.service.id, name: S.service.name, price: S.service.price, priceDisplay: S.service.priceDisplay },
+      addons: S.addons.map(a => ({ id: a.id, name: a.name, price: a.price })),
+      name: S.name.trim(),
+      email: S.email.trim(),
+      phone: S.phone.trim(),
+      smsOptIn: S.smsOptIn,
+    });
 
-    const realAddons = S.addons.filter(a => a.group !== "gel-length" && a.group !== "ext-length");
-    const bookingBody = {
-      idempotency_key: "monaliza-" + Date.now() + "-" + Math.random().toString(36).slice(2),
-      booking: {
-        location_id: LOC_ID,
-        start_at:    S.slot.startAt,
-        customer_id: customerId || undefined,
-        customer_note: addonNote || undefined,
-        seller_note: S.name + " | " + S.email + " | " + S.phone + (addonNote ? " | Add-ons: " + addonNote.replace("Add-ons: ","") : ""),
-        appointment_segments: [{
-          team_member_id:            bookingTeamId,
-          service_variation_id:      bookVarId,
-          service_variation_version: bookVarVer,
-          duration_minutes:          totalDurMin(),
-        }]
-      },
-      // Extra fields for confirmation email — stripped server-side before sending to Square
-      _customerEmail: S.email,
-      _customerName:  S.name,
-      _addons: realAddons.map(a => ({ name: a.name, price: a.price })),
-      _service: (() => {
-        const la = selectedLength();
-        return {
-          name: la ? S.service.name + " (" + la.name + ")" : S.service.name,
-          price: la ? la.price : S.service.price,
-        };
-      })(),
-      _staffName: S.staff.isAny ? "First available tech" : S.staff.name,
-      _phone: S.phone,
-      _smsOptIn: S.smsOptIn,
-    };
-
-    const data = await squarePost("/bookings", bookingBody);
-
-    if (data.errors && data.errors.length > 0) {
-      S.formError = data.errors.map(e => e.detail || e.code).join(" · ");
-      S.submitting = false;
+    if (data.error) {
+      S.formError = data.error;
     } else {
       S.bookingId = data.booking?.id;
-      S.step = 6;
-      S.submitting = false;
+      S.step = 5;
     }
   } catch(e) {
     console.error("Booking error:", e.message);
     S.formError = "Something went wrong. Please call us at (773) 543-6527 to book.";
-    S.submitting = false;
   }
+  S.submitting = false;
   render();
 }
 
@@ -964,8 +736,7 @@ function renderMain() {
   else if (S.step === 2) el.innerHTML = renderStep2();
   else if (S.step === 3) el.innerHTML = renderStep3();
   else if (S.step === 4) el.innerHTML = renderStep4();
-  else if (S.step === 5) el.innerHTML = renderStep5();
-  else if (S.step === 6) el.innerHTML = renderSuccess();
+  else if (S.step === 5) el.innerHTML = renderSuccess();
   attachEvents();
 }
 
@@ -995,16 +766,14 @@ function renderStep1() {
 }
 
 // Step 2 – Add-ons
-// Per-service removal addon IDs allowed:
-// adn1 = Gel Removal, adn2 = Acrylics/Dip/GelX Removal
+// Removal add-ons allowed per service
 const SVC_REMOVALS = {
-  "WDCGCQRNBAS3I35KKKV3UK4I": ["adn1","adn2"],         // Regular Manicure: both
-  "ER7GTM3MORQS3PRPKWUL6ZJ6": ["adn2"],                 // Gel Manicure: Acrylics only
-  "YCAIWAJ6HO57TP25J46K64KE": ["adn1","adn2"],          // Gel Extensions: both
-  "7HLOBJK55ABNMK2SN5Q67MAS": ["adn2"],                 // Wedding Manicure: Acrylics only
-  "7WV4UEQK425UTIS7UX2D4DW6": ["adn1"],                 // Regular Pedicure: Gel Removal only
-  // Gel Refill, Gel Pedicure, Deluxe Pedicure: no removals
+  "regular-manicure": ["gel-removal","acrylic-removal"],
+  "russian-manicure": ["acrylic-removal"],
+  "gel-extensions":   ["gel-removal","acrylic-removal"],
 };
+// Services that offer nail art
+const SVC_ART = ["russian-manicure","gel-extensions"];
 
 function renderRemovalSection(allowedIds, topMargin) {
   const removals = ADDONS.filter(a => allowedIds.includes(a.id));
@@ -1034,131 +803,52 @@ function renderStep2() {
   </p>`;
 
   const svcId = S.service?.id;
-  const showGelLength = svcId === "ER7GTM3MORQS3PRPKWUL6ZJ6";
-  const showExtLength = svcId === "YCAIWAJ6HO57TP25J46K64KE";
-  const lenGrp = showGelLength ? "gel-length" : showExtLength ? "ext-length" : null;
-  const selLen = lenGrp ? S.addons.find(a=>a.group===lenGrp) : null;
   const allowedRemovals = SVC_REMOVALS[svcId] || [];
-  const showArt = !["WDCGCQRNBAS3I35KKKV3UK4I","7WV4UEQK425UTIS7UX2D4DW6"].includes(svcId);
-  const isWedding = svcId === "7HLOBJK55ABNMK2SN5Q67MAS";
-
-  // Length (mandatory single-select) for Gel Manicure and Gel Extensions
-  if (showGelLength || showExtLength) {
-    const lengths = ADDONS.filter(a=>a.group===lenGrp);
-    html += '<div class="cat-label">Length <span style="color:var(--error);font-size:9px;letter-spacing:0.05em;margin-left:4px;">REQUIRED</span></div>';
-    html += '<div class="note" style="margin-bottom:10px;">Select a length to continue — price will update accordingly.</div>';
-    lengths.forEach(a => {
-      const sel = S.addons.find(x=>x.id===a.id) ? "selected" : "";
-      html += `<div class="addon-row ${sel}" data-addon-len="${a.id}">
-        <div class="addon-checkbox" style="border-radius:50%;">${sel?"✓":""}</div>
-        <div class="addon-info">
-          <div class="addon-name">${a.name}${infoIcon(a.desc)}</div>
-          <div class="addon-dur-tag">${fmtDur(a.dur)}</div>
-        </div>
-        <div class="addon-price-tag">${fmt(a.price)}</div>
-      </div>`;
-    });
-  }
+  const showArt = SVC_ART.includes(svcId);
 
   // Removal services (per-service rules, max 1)
   if (allowedRemovals.length > 0) {
-    html += renderRemovalSection(allowedRemovals, showGelLength || showExtLength ? "1.25rem" : "0");
+    html += renderRemovalSection(allowedRemovals, "0");
   }
 
   // Nail art
   if (showArt) {
     const arts = ADDONS.filter(a=>a.group==="art");
-    html += '<div class="cat-label" style="margin-top:1.25rem;">Nail art</div>';
-    if (isWedding) {
-      html += '<div class="note">Nail Art – Level 1 is included with your Wedding Manicure. Upgrade to a higher level below.</div>';
-    } else {
-      html += '<div class="note">Select one nail art level — choosing a new level will replace your current selection.</div>';
-    }
+    html += `<div class="cat-label" style="margin-top:${allowedRemovals.length ? "1.25rem" : "0"};">Nail art</div>`;
+    html += '<div class="note">Select one nail art level — choosing a new level will replace your current selection.</div>';
     arts.forEach(a => {
-      const isIncluded = isWedding && a.id === "adn3"; // Level 1 included for wedding
-      const sel = !isIncluded && S.addons.find(x=>x.id===a.id) ? "selected" : "";
-      if (isIncluded) {
-        html += `<div class="addon-row selected" style="opacity:0.7;cursor:default;">
-          <div class="addon-checkbox" style="background:var(--success);border-color:var(--success);">✓</div>
-          <div class="addon-info">
-            <div class="addon-name">${a.name}${infoIcon(a.desc)}</div>
-            <div class="addon-dur-tag">+${fmtDur(a.dur)}</div>
-          </div>
-          <div class="addon-price-tag" style="color:var(--success);font-size:11px;">Included</div>
-        </div>`;
-      } else {
-        html += `<div class="addon-row ${sel}" data-addon-art="${a.id}">
-          <div class="addon-checkbox">${sel?"✓":""}</div>
-          <div class="addon-info">
-            <div class="addon-name">${a.name}${infoIcon(a.desc)}</div>
-            <div class="addon-dur-tag">+${fmtDur(a.dur)}</div>
-          </div>
-          <div class="addon-price-tag">+${fmt(a.price)}</div>
-        </div>`;
-      }
+      const sel = S.addons.find(x=>x.id===a.id) ? "selected" : "";
+      html += `<div class="addon-row ${sel}" data-addon-art="${a.id}">
+        <div class="addon-checkbox">${sel?"✓":""}</div>
+        <div class="addon-info">
+          <div class="addon-name">${a.name}${infoIcon(a.desc)}</div>
+          <div class="addon-dur-tag">+${fmtDur(a.dur)}</div>
+        </div>
+        <div class="addon-price-tag">+${fmt(a.price)}</div>
+      </div>`;
     });
   }
 
   // If no add-ons at all
-  if (allowedRemovals.length === 0 && !showGelLength && !showExtLength && !showArt) {
+  if (allowedRemovals.length === 0 && !showArt) {
     html += '<div class="state-box">No add-ons available for this service.</div>';
   }
 
-  const canContinue = (!showGelLength && !showExtLength) || selLen;
-  const extraCount = S.addons.filter(a=>a.group!=="gel-length"&&a.group!=="ext-length").length;
+  const extraCount = S.addons.length;
 
   html += `</div>
-  <button class="btn-primary" id="btn2" ${!canContinue?"disabled":""}>
-    Continue${extraCount ? " · " + extraCount + " add-on" + (extraCount>1?"s":"") : (canContinue ? "" : " (select length first)")}
+  <button class="btn-primary" id="btn2">
+    Continue${extraCount ? " · " + extraCount + " add-on" + (extraCount>1?"s":"") : ""}
   </button>`;
   return html;
 }
 
-// Step 3 – Staff
+// Step 3 – Date & Time
 function renderStep3() {
-  let html = '<button class="btn-ghost" id="back3">← Back</button>';
-  html += '<div class="card"><div class="section-heading">Choose your nail tech</div>';
-
-  const eligibleIds = S.eligibleTechIds;
-  // When eligibleIds is empty, no one can do the service — hide all including "No preference"
-  const visibleTeam = (eligibleIds !== null && eligibleIds.length === 0)
-    ? []
-    : TEAM.filter(t => t.isAny || !eligibleIds || eligibleIds.includes(t.id));
-
-  if (S.loadingTechs) {
-    html += '<div class="staff-grid"><div class="state-box" style="grid-column:1/-1"><div class="spinner"></div><br>Checking availability…</div></div>';
-  } else if (S.eligibleTechIds !== null && S.eligibleTechIds.length === 0) {
-    html += `<div class="state-box">No nail technicians are available for this service and add-on combination. Please choose different add-ons or contact us at <a href="tel:7735436527">(773) 543-6527</a>.</div>`;
-  } else {
-    html += '<div class="staff-grid">';
-    visibleTeam.forEach(t => {
-      const sel = S.staff?.id === t.id ? "selected" : "";
-      if (t.isAny) {
-        html += `<div class="staff-card ${sel}" data-staff="${t.id}" style="grid-column:1/-1;">
-          <div class="staff-avatar" style="margin-bottom:10px;">${t.initials}</div>
-          <div class="staff-name-tag">${t.name}</div>
-          <div class="staff-role-tag">${t.role}</div>
-        </div>`;
-      } else {
-        html += `<div class="staff-card ${sel}" data-staff="${t.id}">
-          <div class="staff-avatar">${t.initials}</div>
-          <div class="staff-name-tag">${t.name}</div>
-          <div class="staff-role-tag">${t.role}</div>
-        </div>`;
-      }
-    });
-    html += '</div>';
-  }
-  html += '</div>'; // close card
-  html += `<button class="btn-primary" id="btn3" ${(!S.staff || S.loadingTechs) ? "disabled" : ""}>Continue</button>`;
-  return html;
-}
-
-// Step 4 – Date & Time
-function renderStep4() {
   const dates = getDates();
-  let html = '<button class="btn-ghost" id="back4">← Back</button>';
+  let html = '<button class="btn-ghost" id="back3">← Back</button>';
   html += '<div class="card"><div class="section-heading">Pick a date &amp; time</div>';
+  html += `<p style="font-size:13px;color:var(--ink-faint);margin-bottom:1rem;">We're open ${HOURS_TEXT}.</p>`;
 
   // Date strip
   html += '<div class="date-strip">';
@@ -1180,7 +870,7 @@ function renderStep4() {
   } else if (S.slotsError) {
     html += `<div class="state-box" style="color:var(--error)">${S.slotsError}</div>`;
   } else if (S.slots.length === 0) {
-    html += `<div class="state-box">No available times on this date${S.staff.isAny ? "" : " for " + S.staff.name}.<br>Try a different date.</div>`;
+    html += `<div class="state-box">No available times on this date.<br>Try a different date.</div>`;
   } else {
     html += `<div class="slots-heading">${S.slots.length} times available · ${fmtDur(totalDurMs())} total</div>`;
     html += '<div class="slot-grid">';
@@ -1193,37 +883,30 @@ function renderStep4() {
   }
 
   html += `</div>
-  <button class="btn-primary" id="btn4" ${!S.slot?"disabled":""}>Continue</button>`;
+  <button class="btn-primary" id="btn3" ${!S.slot?"disabled":""}>Continue</button>`;
   return html;
 }
 
-// Step 5 – Confirm
-function renderStep5() {
+// Step 4 – Confirm
+function renderStep4() {
   const DAY  = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const MNAME= ["January","February","March","April","May","June","July","August","September","October","November","December"];
   const d    = new Date(S.date.iso + "T00:00:00");
 
-  let html = '<button class="btn-ghost" id="back5">← Back</button>';
+  let html = '<button class="btn-ghost" id="back4">← Back</button>';
   html += '<div class="card">';
   html += '<div class="section-heading">Confirm your booking</div>';
 
   // Summary table
   html += '<table class="summary-table">';
-  const lenAddon = selectedLength();
-  const svcDisplayPrice = lenAddon ? lenAddon.price : S.service.price;
-  const svcDisplayName = lenAddon ? S.service.name + " (" + lenAddon.name + ")" : S.service.name;
-  html += `<tr><td>${svcDisplayName}</td><td>${fmt(svcDisplayPrice)}</td></tr>`;
-  const isWeddingSummary = S.service.id === "7HLOBJK55ABNMK2SN5Q67MAS";
-  if (isWeddingSummary && !S.addons.find(a=>a.group==="art")) {
-    html += `<tr class="muted"><td>Nail Art – Level 1</td><td style="color:var(--success);font-size:11px;">Included</td></tr>`;
-  }
-  S.addons.filter(a=>a.group!=="gel-length"&&a.group!=="ext-length").forEach(a => {
+  html += `<tr><td>${S.service.name}</td><td>${S.service.priceDisplay || fmt(S.service.price)}</td></tr>`;
+  S.addons.forEach(a => {
     html += `<tr class="muted"><td>${a.name}</td><td>+${fmt(a.price)}</td></tr>`;
   });
   html += `<tr class="muted"><td colspan="2" style="padding-top:12px;padding-bottom:4px;border-top:1px solid var(--border);color:var(--ink-faint);font-size:12px;">
-    ${DAY[d.getDay()]}, ${MNAME[d.getMonth()]} ${d.getDate()} · ${fmtSlotLabel(S.slot.startAt)} · with ${S.staff.isAny ? "first available tech" : S.staff.name} · ${fmtDur(totalDurMs())}
+    ${DAY[d.getDay()]}, ${MNAME[d.getMonth()]} ${d.getDate()} · ${fmtSlotLabel(S.slot.startAt)} · ${fmtDur(totalDurMs())}
   </td></tr>`;
-  html += `<tr class="total"><td>Total</td><td>${fmt(totalPrice())}</td></tr>`;
+  html += `<tr class="total"><td>Total</td><td>${totalDisplay()}</td></tr>`;
   html += '</table>';
 
   html += '</div>';
@@ -1279,26 +962,18 @@ function renderSuccess() {
   const MNAME= ["January","February","March","April","May","June","July","August","September","October","November","December"];
   const d = new Date(S.date.iso + "T00:00:00");
   const policy = getCancellationPolicy(S.slot.startAt);
-  const staffDisplay = S.staff.isAny ? "First available tech" : S.staff.name;
   return `<div class="card">
     <div class="success-wrap">
       <div class="success-icon">✓</div>
       <div class="success-title">You're all booked!</div>
       <div class="success-sub">A confirmation will be sent to <strong style="color:var(--ink)">${S.email}</strong> shortly.<br>See you soon, ${S.name.split(" ")[0]}!</div>
       <table class="summary-table" style="text-align:left;margin-bottom:1.5rem;">
-        ${(() => {
-          const la = selectedLength();
-          const sp = la ? la.price : S.service.price;
-          const sn = la ? S.service.name + " (" + la.name + ")" : S.service.name;
-          const isW = S.service.id === "7HLOBJK55ABNMK2SN5Q67MAS";
-          const inclRow = isW && !S.addons.find(a=>a.group==="art") ? `<tr class="muted"><td>Nail Art – Level 1</td><td style="color:var(--success);font-size:11px;">Included</td></tr>` : "";
-          return `<tr><td>${sn}</td><td>${fmt(sp)}</td></tr>${inclRow}`;
-        })()}
-        ${S.addons.filter(a=>a.group!=="gel-length"&&a.group!=="ext-length").map(a=>`<tr class="muted"><td>${a.name}</td><td>+${fmt(a.price)}</td></tr>`).join("")}
+        <tr><td>${S.service.name}</td><td>${S.service.priceDisplay || fmt(S.service.price)}</td></tr>
+        ${S.addons.map(a=>`<tr class="muted"><td>${a.name}</td><td>+${fmt(a.price)}</td></tr>`).join("")}
         <tr class="muted"><td colspan="2" style="padding-top:10px;border-top:1px solid var(--border);font-size:12px;">
-          ${MNAME[d.getMonth()]} ${d.getDate()} · ${fmtSlotLabel(S.slot.startAt)} · with ${staffDisplay}
+          ${MNAME[d.getMonth()]} ${d.getDate()} · ${fmtSlotLabel(S.slot.startAt)}
         </td></tr>
-        <tr class="total"><td>Total</td><td>${fmt(totalPrice())}</td></tr>
+        <tr class="total"><td>Total</td><td>${totalDisplay()}</td></tr>
       </table>
       <div style="font-size:13px;color:var(--ink-faint);margin-bottom:1.25rem;">1514 W Ardmore Ave, Chicago IL 60660<br>(773) 543-6527</div>
       ${policy.withinWindow
@@ -1314,16 +989,6 @@ function attachEvents() {
   // Services
   document.querySelectorAll("[data-svc]").forEach(el => {
     el.onclick = () => { S.service = SERVICES.find(s=>s.id===el.dataset.svc); S.addons=[]; render(); };
-  });
-  // Length (single-select, mandatory)
-  document.querySelectorAll("[data-addon-len]").forEach(el => {
-    el.onclick = () => {
-      const a = ADDONS.find(x=>x.id===el.dataset.addonLen);
-      const lenIds = ADDONS.filter(x=>x.group==="gel-length"||x.group==="ext-length").map(x=>x.id);
-      S.addons = S.addons.filter(x=>!lenIds.includes(x.id));
-      S.addons.push(a);
-      render();
-    };
   });
   // Removal add-ons (single-select — clicking selected one deselects it)
   document.querySelectorAll("[data-addon-removal]").forEach(el => {
@@ -1356,10 +1021,6 @@ function attachEvents() {
       render();
     };
   });
-  // Staff
-  document.querySelectorAll("[data-staff]").forEach(el => {
-    el.onclick = () => { S.staff = TEAM.find(t=>t.id===el.dataset.staff); render(); };
-  });
   // Dates
   document.querySelectorAll("[data-date]").forEach(el => {
     el.onclick = () => {
@@ -1381,60 +1042,15 @@ function attachEvents() {
   // Next buttons
   const go = (id, fn) => { const el=$(id); if(el) el.onclick=fn; };
   go("btn1",     () => { S.step=2; render(); });
-  go("btn2", async () => {
-    S.loadingTechs = true; S.eligibleTechIds = null;
-    render();
-    try {
-      const realTechs = TEAM.filter(t => !t.isAny);
-      const allTechIds = realTechs.map(t => t.id);
-      const start = new Date(); start.setHours(0,0,0,0);
-      const end   = new Date(start.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-      // Collect all variation IDs: primary service + selected add-ons (modId = catalog item ID)
-      const svc = S.service;
-      const serviceVarId = svc.selectedVar ? svc.selectedVar.varId : svc.varId;
-      const addonVarIds  = S.addons
-        .filter(a => a.varId && a.group !== "gel-length" && a.group !== "ext-length")
-        .map(a => a.varId);
-      const allVarIds = [serviceVarId, ...addonVarIds];
-
-      // Search availability for each variation — intersect results
-      // A tech must appear for ALL variations to be shown
-      let eligibleSet = null;
-      for (const varId of allVarIds) {
-        const data = await proxyPost("/v2/bookings/availability/search", {
-          query: { filter: {
-            location_id: LOC_ID,
-            start_at_range: { start_at: start.toISOString(), end_at: end.toISOString() },
-            segment_filters: [{ service_variation_id: varId,
-              team_member_id_filter: { any: allTechIds } }]
-          }}
-        });
-        const ids = new Set((data.availabilities || []).flatMap(a =>
-          (a.appointment_segments || []).map(seg => seg.team_member_id)
-        ));
-        if (eligibleSet === null) {
-          eligibleSet = new Set(ids);
-        } else {
-          for (const id of eligibleSet) {
-            if (!ids.has(id)) eligibleSet.delete(id);
-          }
-        }
-      }
-      S.eligibleTechIds = eligibleSet ? [...eligibleSet] : allTechIds;
-    } catch(e) {
-      console.error("Tech eligibility error:", e.message);
-      S.eligibleTechIds = TEAM.filter(t => !t.isAny).map(t => t.id);
-    }
-    S.loadingTechs = false;
-    S.step = 3; render();
+  go("btn2",     () => {
+    // Appointment length may have changed, so any earlier date/time choice is stale
+    S.date = null; S.slot = null; S.slots = []; S.slotsError = null;
+    S.step=3; render();
   });
   go("btn3",     () => { S.step=4; render(); });
-  go("btn4",     () => { S.step=5; render(); });
   go("back2",    () => { S.step=1; render(); });
-  go("back3",    () => { S.step=2; S.eligibleTechIds=null; S.staff=null; render(); });
+  go("back3",    () => { S.step=2; render(); });
   go("back4",    () => { S.step=3; render(); });
-  go("back5",    () => { S.step=4; render(); });
   go("btn-confirm", () => {
     S.name  = ($("inp-name")  ||{}).value || S.name;
     S.email = ($("inp-email") ||{}).value || S.email;
@@ -1443,7 +1059,7 @@ function attachEvents() {
       S.formError = "Please fill in all fields before confirming.";
       render(); return;
     }
-    createBooking(); // ← REAL Square booking call
+    createBooking();
   });
 
   // Keep form fields in state while typing
@@ -1463,8 +1079,7 @@ function attachEvents() {
 
 // ─── MANAGE PAGE ─────────────────────────────────────────────────────────────
 const MS = {
-  mode: null,
-  eligibleTechIds: null,        // 'token' | 'lookup' | 'found' | 'reschedule' | 'done'
+  mode: null,                   // 'token' | 'lookup' | 'found' | 'reschedule' | 'done' | 'no-token'
   booking: null,
   token: null,
   lookupTab: 'email',
@@ -1472,26 +1087,12 @@ const MS = {
   bookings: [],
   slots: [],
   loadingSlots: false,
-  selectedTech: null,
   selectedDate: null,
   selectedSlot: null,
   working: false,
   error: null,
   message: null,
 };
-
-async function proxyGet(path) {
-  const r = await fetch(PROXY_BASE + "?path=" + encodeURIComponent(path));
-  return r.json();
-}
-async function proxyPost(path, body) {
-  const r = await fetch(PROXY_BASE + "?path=" + encodeURIComponent(path), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return r.json();
-}
 
 function fmtApptTime(isoStr) {
   const d = new Date(isoStr);
@@ -1530,33 +1131,11 @@ async function initManagePage() {
     // Verify token with server
     MS.working = true;
     renderManage();
-    const result = await proxyPost("/v2/bookings/verify-token", { token });
+    const result = await apiPost("/bookings/verify-token", { token });
     MS.working = false;
     if (result.valid && result.booking) {
       MS.booking = result.booking;
       MS.mode = "found";
-      // Compute eligible techs for this service (filters tech picker on reschedule)
-      const msSeg = result.booking.appointment_segments?.[0];
-      if (msSeg) {
-        const msVarId = msSeg.service_variation_id;
-        const msRealTechs = TEAM.filter(t => !t.isAny);
-        const msStart = new Date(); msStart.setHours(0,0,0,0);
-        const msEnd = new Date(msStart.getTime() + 14 * 24 * 60 * 60 * 1000);
-        try {
-          const msAvail = await proxyPost("/v2/bookings/availability/search", {
-            query: { filter: {
-              location_id: result.booking.location_id,
-              start_at_range: { start_at: msStart.toISOString(), end_at: msEnd.toISOString() },
-              segment_filters: [{ service_variation_id: msVarId,
-                team_member_id_filter: { any: msRealTechs.map(t => t.id) } }]
-            }}
-          });
-          const msIds = new Set((msAvail.availabilities || []).flatMap(a =>
-            (a.appointment_segments || []).map(s => s.team_member_id)
-          ));
-          MS.eligibleTechIds = [...msIds];
-        } catch(e) { MS.eligibleTechIds = msRealTechs.map(t => t.id); }
-      }
     } else {
       MS.error = result.error || "This link is invalid or has expired.";
       MS.mode = "no-token";
@@ -1574,9 +1153,9 @@ async function handleLookup() {
   MS.error = null;
   renderManage();
   const params = MS.lookupTab === "email"
-    ? "/v2/bookings/lookup?email=" + encodeURIComponent(MS.lookupValue.trim())
-    : "/v2/bookings/lookup?phone=" + encodeURIComponent(MS.lookupValue.trim());
-  const result = await proxyGet(params);
+    ? "/bookings/lookup?email=" + encodeURIComponent(MS.lookupValue.trim())
+    : "/bookings/lookup?phone=" + encodeURIComponent(MS.lookupValue.trim());
+  const result = await apiGet(params);
   MS.working = false;
   if (result.error) {
     MS.error = result.error;
@@ -1598,7 +1177,7 @@ async function handleCancel() {
   MS.working = true;
   MS.error = null;
   renderManage();
-  const result = await proxyPost("/v2/bookings/cancel", {
+  const result = await apiPost("/bookings/cancel", {
     bookingId: MS.booking.id,
     token: MS.token,
   });
@@ -1620,35 +1199,20 @@ async function loadRescheduleSlots(dateIso) {
   MS.loadingSlots = true;
   renderManage();
 
-  const seg = MS.booking.appointment_segments?.[0];
-  const startIso = dateIso + "T00:00:00-05:00";
-  const endIso   = dateIso + "T23:59:59-05:00";
-  const endLimit = new Date(dateIso + "T17:00:00-05:00").getTime();
-
-  const realTechs = TEAM.filter(t => !t.isAny);
-  const teamIds = MS.selectedTech?.isAny
-    ? realTechs.map(t => t.id)
-    : [MS.selectedTech?.id || seg.team_member_id];
-
-  const body = {
-    query: { filter: {
-      location_id: MS.booking.location_id,
-      start_at_range: { start_at: startIso, end_at: endIso },
-      segment_filters: [{
-        service_variation_id: seg.service_variation_id,
-        team_member_id_filter: { any: teamIds }
-      }]
-    }}
-  };
-  const data = await proxyPost("/v2/bookings/availability/search", body);
-  const seen = new Set();
-  MS.slots = (data.availabilities || []).filter(a => {
-    const start = new Date(a.start_at).getTime();
-    if ((start + seg.duration_minutes * 60000) > endLimit) return false;
-    if (seen.has(a.start_at)) return false;
-    seen.add(a.start_at);
-    return true;
-  });
+  try {
+    const data = await apiPost("/availability", {
+      date: dateIso,
+      durationMinutes: MS.booking.duration_minutes,
+      excludeBookingId: MS.booking.id,   // the appointment's own time counts as free
+    });
+    if (MS.selectedDate !== dateIso) return;
+    MS.slots = data.slots || [];
+    if (data.error) MS.error = data.error;
+  } catch(e) {
+    if (MS.selectedDate !== dateIso) return;
+    MS.slots = [];
+    MS.error = "Could not load availability. Please try again.";
+  }
   MS.loadingSlots = false;
   renderManage();
 }
@@ -1658,11 +1222,10 @@ async function handleReschedule() {
   MS.working = true;
   MS.error = null;
   renderManage();
-  const result = await proxyPost("/v2/bookings/reschedule", {
+  const result = await apiPost("/bookings/reschedule", {
     bookingId: MS.booking.id,
     token: MS.token,
     newStartAt: MS.selectedSlot,
-    newTeamMemberId: MS.selectedTech?.isAny ? null : (MS.selectedTech?.id || null),
   });
   MS.working = false;
   if (result.error) {
@@ -1690,8 +1253,6 @@ function renderManage() {
     } else {
       el.innerHTML = renderManageDetail();
     }
-  } else if (MS.mode === "tech-pick") {
-    el.innerHTML = renderManageTechPicker();
   } else if (MS.mode === "reschedule") {
     el.innerHTML = renderManageReschedule();
   } else if (MS.mode === "done") {
@@ -1757,7 +1318,7 @@ function renderManageList() {
   MS.bookings.forEach(b => {
     html += `<div class="svc-row" data-manage-select="${b.id}" style="flex-direction:column;align-items:flex-start;gap:4px;">
       <div class="svc-name">${fmtApptTime(b.start_at)}</div>
-      <div class="svc-dur">${(b.appointment_segments?.[0]?.duration_minutes||0)} min</div>
+      <div class="svc-dur">${b.duration_minutes||0} min</div>
     </div>`;
   });
   html += '</div>';
@@ -1766,25 +1327,10 @@ function renderManageList() {
 
 function renderManageDetail() {
   const b = MS.booking;
-  const seg = b.appointment_segments?.[0];
   const blocked = within24h(b.start_at);
   const deadline = getCancelDeadline(b.start_at);
-
-  // Look up service name from SERVICES array using the variation ID
-  const svcMatch = seg ? SERVICES.find(s =>
-    s.varId === seg.service_variation_id ||
-    s.id === seg.service_variation_id
-  ) : null;
-  const svcName = svcMatch ? svcMatch.name : null;
-
-  // Look up tech name from TEAM array
-  const techMatch = seg ? TEAM.find(t => t.id === seg.team_member_id) : null;
-  const techName = techMatch ? techMatch.name : null;
-
-  // Parse add-ons from seller note (stored as "Name | email | phone | Add-ons: X")
-  const sellerNote = b.seller_note || "";
-  const addonMatch = sellerNote.match(/Add-ons: (.+)/);
-  const addons = addonMatch ? addonMatch[1] : null;
+  const svcName = b.service ? b.service.name : null;
+  const addons = (b.addons || []).map(a => a.name).join(", ");
 
   let html = '<div class="manage-card">';
   html += '<div class="section-heading">Your appointment</div>';
@@ -1796,10 +1342,7 @@ function renderManageDetail() {
   if (addons) {
     html += `<div class="manage-detail-row"><span class="manage-detail-label">Add-ons</span><span class="manage-detail-value" style="color:var(--accent)">${addons}</span></div>`;
   }
-  if (techName) {
-    html += `<div class="manage-detail-row"><span class="manage-detail-label">Nail tech</span><span class="manage-detail-value">${techName}</span></div>`;
-  }
-  html += `<div class="manage-detail-row"><span class="manage-detail-label">Duration</span><span class="manage-detail-value">${seg?.duration_minutes||0} min</span></div>`;
+  html += `<div class="manage-detail-row"><span class="manage-detail-label">Duration</span><span class="manage-detail-value">${b.duration_minutes||0} min</span></div>`;
   html += '</div>';
 
   if (MS.error) {
@@ -1822,44 +1365,9 @@ function renderManageDetail() {
   return html;
 }
 
-function renderManageTechPicker() {
-  const eligIds = MS.eligibleTechIds;
-  const visibleTechs = TEAM.filter(t =>
-    t.isAny || !eligIds || eligIds.includes(t.id)
-  );
-  let html = `<button class="btn-ghost" id="back-manage">← Back</button>`;
-  html += '<div class="manage-card"><div class="section-heading">Choose your nail tech</div>';
-  html += '<div class="staff-grid">';
-  visibleTechs.forEach(t => {
-    const sel = MS.selectedTech?.id === t.id ? "selected" : "";
-    if (t.isAny) {
-      html += `<div class="staff-card ${sel}" data-manage-tech="${t.id}" style="grid-column:1/-1;">
-        <div class="staff-avatar" style="margin-bottom:10px;">${t.initials}</div>
-        <div class="staff-name-tag">${t.name}</div>
-        <div class="staff-role-tag">${t.role}</div>
-      </div>`;
-    } else {
-      html += `<div class="staff-card ${sel}" data-manage-tech="${t.id}">
-        <div class="staff-avatar">${t.initials}</div>
-        <div class="staff-name-tag">${t.name}</div>
-        <div class="staff-role-tag">${t.role}</div>
-      </div>`;
-    }
-  });
-  html += '</div></div>';
-  html += `<button class="btn-primary" id="btn-pick-date" ${!MS.selectedTech?'disabled':''}>Continue</button>`;
-  return html;
-}
-
 function renderManageReschedule() {
   // Date strip — next 14 days excluding today (can't reschedule same-day)
-  const DAY=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const dates = [];
-  for (let i = 1; i <= 60; i++) {
-    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+i);
-    dates.push({ iso: d.toISOString().slice(0,10), day: DAY[d.getDay()], num: d.getDate(), mon: MON[d.getMonth()] });
-  }
+  const dates = getDates(1);
 
   let html = `<button class="btn-ghost" id="back-manage">← Back</button>`;
   html += '<div class="manage-card"><div class="section-heading">Choose a new date & time</div>';
@@ -1883,11 +1391,7 @@ function renderManageReschedule() {
     html += `<div class="slots-heading">${MS.slots.length} times available</div>`;
     html += '<div class="slot-grid">';
     MS.slots.forEach(a => {
-      const d = new Date(a.start_at);
-      let h = d.getHours(), m = d.getMinutes();
-      const ampm = h < 12 ? "am" : "pm";
-      h = h > 12 ? h-12 : (h===0?12:h);
-      const lbl = h + ":" + String(m).padStart(2,"0") + ampm;
+      const lbl = fmtSlotLabel(a.start_at);
       const sel = MS.selectedSlot === a.start_at ? "selected" : "";
       html += `<button class="slot-btn ${sel}" data-manage-slot="${a.start_at}">${lbl}</button>`;
     });
@@ -1937,27 +1441,16 @@ function attachManageEvents() {
 
   // Reschedule / cancel
   const br = document.getElementById("btn-reschedule");
-  if (br) br.onclick = () => { MS.mode = "tech-pick"; MS.selectedTech = null; MS.selectedDate = null; MS.selectedSlot = null; MS.error = null; renderManage(); };
+  if (br) br.onclick = () => { MS.mode = "reschedule"; MS.selectedDate = null; MS.selectedSlot = null; MS.slots = []; MS.error = null; renderManage(); };
   const bc = document.getElementById("btn-cancel");
   if (bc) bc.onclick = handleCancel;
 
   // Back button — context-aware
   const bk = document.getElementById("back-manage");
   if (bk) bk.onclick = () => {
-    if (MS.mode === "reschedule") { MS.mode = "tech-pick"; MS.selectedDate = null; MS.selectedSlot = null; }
-    else { MS.mode = "found"; }
+    MS.mode = "found"; MS.selectedDate = null; MS.selectedSlot = null;
     MS.error = null; renderManage();
   };
-
-  // Tech picker
-  document.querySelectorAll("[data-manage-tech]").forEach(el => {
-    el.onclick = () => {
-      MS.selectedTech = TEAM.find(t => t.id === el.dataset.manageTech);
-      renderManage();
-    };
-  });
-  const bpd = document.getElementById("btn-pick-date");
-  if (bpd) bpd.onclick = () => { MS.mode = "reschedule"; MS.error = null; renderManage(); };
 
   // Date chip in reschedule
   document.querySelectorAll("[data-manage-date]").forEach(el => {
@@ -1997,19 +1490,15 @@ const SS = {
   loadingSlots: false,
   selectedDate: null,
   selectedSlot: null,
-  selectedTech: null,
-  selectedTech: null,
-  eligibleTechIds: null,
   dashboardStart: "",
   dashboardEnd: "",
   dashboardData: null,
   dashboardFilterConfirmed: true,   // show confirmed by default
-  dashboardFilterTech: "",          // filter by tech name
   previousMode: null,               // track where manage/cancel was launched from
 };
 
 async function staffPost(path, body) {
-  const r = await fetch(PROXY_BASE + "?path=" + encodeURIComponent(path), {
+  const r = await fetch(API_BASE + "?path=" + encodeURIComponent(path), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...body, staffPassword: SS.password }),
@@ -2029,7 +1518,7 @@ async function handleStaffLogin() {
   SS.working = true; SS.error = null;
   renderStaff();
   try {
-    const r = await fetch(PROXY_BASE + "?path=/v2/staff/auth-check", {
+    const r = await fetch(API_BASE + "?path=/staff/auth-check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ staffPassword: SS.password }),
@@ -2053,39 +1542,17 @@ async function handleStaffLookup() {
 
   if (SS.searchMode === "id") {
     if (!SS.bookingIdInput.trim()) { SS.working = false; SS.error = "Please enter a Booking ID."; renderStaff(); return; }
-    const result = await staffPost("/v2/bookings/staff-lookup", { bookingId: SS.bookingIdInput.trim() });
+    const result = await staffPost("/bookings/staff-lookup", { bookingId: SS.bookingIdInput.trim() });
     if (result.error) {
       SS.error = result.error === "Invalid staff password" ? "Incorrect password. Go back and try again." : result.error;
     } else {
       SS.booking = result.booking; SS.token = result.token; SS.mode = "found";
-      // Compute eligible techs for this service
-      SS.eligibleTechIds = null;
-      const ssSeg = result.booking.appointment_segments?.[0];
-      if (ssSeg) {
-        try {
-          const ssRealTechs = TEAM.filter(t => !t.isAny);
-          const ssStart = new Date(); ssStart.setHours(0,0,0,0);
-          const ssEnd = new Date(ssStart.getTime() + 14 * 24 * 60 * 60 * 1000);
-          const ssAvail = await proxyPost("/v2/bookings/availability/search", {
-            query: { filter: {
-              location_id: result.booking.location_id,
-              start_at_range: { start_at: ssStart.toISOString(), end_at: ssEnd.toISOString() },
-              segment_filters: [{ service_variation_id: ssSeg.service_variation_id,
-                team_member_id_filter: { any: ssRealTechs.map(t => t.id) } }]
-            }}
-          });
-          const ssIds = new Set((ssAvail.availabilities || []).flatMap(a =>
-            (a.appointment_segments || []).map(s => s.team_member_id)
-          ));
-          SS.eligibleTechIds = [...ssIds];
-        } catch(e) { SS.eligibleTechIds = TEAM.filter(t => !t.isAny).map(t => t.id); }
-      }
     }
     SS.working = false;
 
   } else if (SS.searchMode === "name") {
     if (!SS.firstName.trim() && !SS.lastName.trim()) { SS.working = false; SS.error = "Enter at least a first or last name."; renderStaff(); return; }
-    const result = await staffPost("/v2/bookings/staff-search", {
+    const result = await staffPost("/bookings/staff-search", {
       firstName: SS.firstName.trim(),
       lastName:  SS.lastName.trim(),
       includeCancelled: SS.includeCancelled,
@@ -2098,7 +1565,7 @@ async function handleStaffLookup() {
 
   } else {
     if (!SS.phoneInput.trim()) { SS.working = false; SS.error = "Please enter a phone number."; renderStaff(); return; }
-    const result = await staffPost("/v2/bookings/staff-search", { phone: SS.phoneInput.trim(), includeCancelled: SS.includeCancelled });
+    const result = await staffPost("/bookings/staff-search", { phone: SS.phoneInput.trim(), includeCancelled: SS.includeCancelled });
     SS.working = false;
     if (result.error) { SS.error = result.error; }
     else if (!result.bookings || result.bookings.length === 0) { SS.error = "No appointments found for that phone number."; }
@@ -2113,7 +1580,7 @@ async function handleStaffCancel() {
   if (!confirm("Cancel this appointment? The customer " + (SS.notifyCustomer ? "WILL" : "will NOT") + " be notified.")) return;
   SS.working = true; SS.error = null;
   renderStaff();
-  const result = await staffPost("/v2/bookings/staff-cancel", {
+  const result = await staffPost("/bookings/staff-cancel", {
     bookingId: SS.booking.id,
     notifyCustomer: SS.notifyCustomer,
   });
@@ -2126,27 +1593,20 @@ async function handleStaffCancel() {
 async function loadStaffSlots(dateIso) {
   SS.selectedDate = dateIso; SS.selectedSlot = null; SS.loadingSlots = true;
   renderStaff();
-  const seg = SS.booking.appointment_segments?.[0];
-  const startIso = dateIso + "T00:00:00-05:00";
-  const endIso   = dateIso + "T23:59:59-05:00";
-  const endLimit = new Date(dateIso + "T17:00:00-05:00").getTime();
-  const realTechs = TEAM.filter(t => !t.isAny);
-  const teamIds = SS.selectedTech?.isAny
-    ? (SS.eligibleTechIds && SS.eligibleTechIds.length > 0 ? SS.eligibleTechIds : realTechs.map(t=>t.id))
-    : [SS.selectedTech?.id || seg.team_member_id];
-  const body = { query: { filter: {
-    location_id: SS.booking.location_id,
-    start_at_range: { start_at: startIso, end_at: endIso },
-    segment_filters: [{ service_variation_id: seg.service_variation_id, team_member_id_filter: { any: teamIds } }]
-  }}};
-  const data = await proxyPost("/v2/bookings/availability/search", body);
-  const seen = new Set();
-  SS.slots = (data.availabilities || []).filter(a => {
-    const start = new Date(a.start_at).getTime();
-    if ((start + seg.duration_minutes * 60000) > endLimit) return false;
-    if (seen.has(a.start_at)) return false;
-    seen.add(a.start_at); return true;
-  });
+  try {
+    const data = await apiPost("/availability", {
+      date: dateIso,
+      durationMinutes: SS.booking.duration_minutes,
+      excludeBookingId: SS.booking.id,   // the appointment's own time counts as free
+    });
+    if (SS.selectedDate !== dateIso) return;
+    SS.slots = data.slots || [];
+    if (data.error) SS.error = data.error;
+  } catch(e) {
+    if (SS.selectedDate !== dateIso) return;
+    SS.slots = [];
+    SS.error = "Could not load availability. Please try again.";
+  }
   SS.loadingSlots = false;
   renderStaff();
 }
@@ -2155,10 +1615,9 @@ async function handleStaffReschedule() {
   if (!SS.selectedSlot) return;
   SS.working = true; SS.error = null;
   renderStaff();
-  const result = await staffPost("/v2/bookings/staff-reschedule", {
+  const result = await staffPost("/bookings/staff-reschedule", {
     bookingId: SS.booking.id,
     newStartAt: SS.selectedSlot,
-    newTeamMemberId: SS.selectedTech?.isAny ? null : (SS.selectedTech?.id || null),
     notifyCustomer: SS.notifyCustomer,
   });
   SS.working = false;
@@ -2173,7 +1632,6 @@ function renderStaff() {
   if      (SS.mode === "login")     el.innerHTML = renderStaffLogin();
   else if (SS.mode === "lookup")    el.innerHTML = renderStaffLookup();
   else if (SS.mode === "found")     el.innerHTML = renderStaffDetail();
-  else if (SS.mode === "tech-pick") el.innerHTML = renderStaffTechPick();
   else if (SS.mode === "reschedule") el.innerHTML = renderStaffReschedule();
   else if (SS.mode === "done")      el.innerHTML = renderStaffDone();
   else if (SS.mode === "dashboard") el.innerHTML = renderStaffDashboard();
@@ -2219,8 +1677,8 @@ function renderStaffLookup() {
 
   if (SS.searchMode === "id") {
     html += `<div class="form-group">
-      <label class="form-label">Square Booking ID</label>
-      <input type="text" id="staff-booking-id" placeholder="e.g. pcpwe9sr41zxy5" value="${SS.bookingIdInput}" style="font-family:monospace;font-size:13px;">
+      <label class="form-label">Booking ID</label>
+      <input type="text" id="staff-booking-id" placeholder="e.g. a3f09c12bd" value="${SS.bookingIdInput}" style="font-family:monospace;font-size:13px;">
     </div>`;
   } else if (SS.searchMode === "name") {
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -2260,10 +1718,8 @@ function renderStaffLookup() {
     html += `<div class="manage-card" style="margin-top:8px;">
       <div class="cat-label" style="margin-top:0;">${visibleCount} appointment${visibleCount!==1?"s":""} found — select one</div>`;
     displayResults.forEach(b => {
-      const seg = b.appointment_segments?.[0];
-      const svc = seg ? SERVICES.find(s => s.varId === seg.service_variation_id) : null;
-      const note = b.seller_note || "";
-      const namePart = note.split("|")[0].trim();
+      const svc = b.service;
+      const namePart = b.name || "";
       const isCancelled = CANCELLED_STATUSES.includes(b.status);
       const bgStyle = isCancelled ? "background:#FFF5F5;border-color:#F5C6C2;" : "";
       const statusBadge = isCancelled
@@ -2285,17 +1741,11 @@ function renderStaffLookup() {
 
 function renderStaffDetail() {
   const b = SS.booking;
-  const seg = b.appointment_segments?.[0];
-  const svcMatch = seg ? SERVICES.find(s => s.varId === seg.service_variation_id || s.id === seg.service_variation_id) : null;
-  const techMatch = seg ? TEAM.find(t => t.id === seg.team_member_id) : null;
-  const contact = (() => {
-    const note = b.seller_note || "";
-    const addonMatch = note.match(/Add-ons:\s*(.+)/);
-    const addons = addonMatch ? addonMatch[1].trim() : "";
-    const clean = note.replace(/\s*\|?\s*Add-ons:.+/, "").trim();
-    const parts = clean.split("|").map(s => s.trim());
-    return { name: parts[0]||"", email: parts[1]||"", phone: parts[2]||"", addons };
-  })();
+  const svcMatch = b.service || null;
+  const contact = {
+    name: b.name || "", email: b.email || "", phone: b.phone || "",
+    addons: (b.addons || []).map(a => a.name).join(", "),
+  };
   const status = b.status;
   const isCancelled = status === "CANCELLED_BY_CUSTOMER" || status === "CANCELLED_BY_SELLER" || status === "NO_SHOW";
 
@@ -2304,7 +1754,6 @@ function renderStaffDetail() {
     <div class="section-heading">Appointment details</div>
     <div class="manage-detail-row"><span class="manage-detail-label">Date & time</span><span class="manage-detail-value">${fmtApptTime(b.start_at)}</span></div>
     ${svcMatch ? `<div class="manage-detail-row"><span class="manage-detail-label">Service</span><span class="manage-detail-value">${svcMatch.name}</span></div>` : ""}
-    ${techMatch ? `<div class="manage-detail-row"><span class="manage-detail-label">Nail tech</span><span class="manage-detail-value">${techMatch.name}</span></div>` : ""}
     ${contact.name ? `<div class="manage-detail-row"><span class="manage-detail-label">Client</span><span class="manage-detail-value">${contact.name}</span></div>` : ""}
     ${contact.email ? `<div class="manage-detail-row"><span class="manage-detail-label">Email</span><span class="manage-detail-value">${contact.email}</span></div>` : ""}
     ${contact.phone ? `<div class="manage-detail-row"><span class="manage-detail-label">Phone</span><span class="manage-detail-value">${contact.phone}</span></div>` : ""}
@@ -2324,38 +1773,8 @@ function renderStaffDetail() {
   return html;
 }
 
-function renderStaffTechPick() {
-  const ssEligIds = SS.eligibleTechIds;
-  const ssVisibleTeam = TEAM.filter(t => t.isAny || !ssEligIds || ssEligIds.includes(t.id));
-  let html = `<button class="btn-ghost" id="back-staff-tech">← Back</button>`;
-  html += `<div class="manage-card"><div class="section-heading">Choose nail tech</div><div class="staff-grid">`;
-  ssVisibleTeam.forEach(t => {
-    const sel = SS.selectedTech?.id === t.id ? "selected" : "";
-    if (t.isAny) {
-      html += `<div class="staff-card ${sel}" data-staff-tech="${t.id}" style="grid-column:1/-1;">
-        <div class="staff-avatar" style="margin-bottom:10px;">${t.initials}</div>
-        <div class="staff-name-tag">${t.name}</div><div class="staff-role-tag">${t.role}</div>
-      </div>`;
-    } else {
-      html += `<div class="staff-card ${sel}" data-staff-tech="${t.id}">
-        <div class="staff-avatar">${t.initials}</div>
-        <div class="staff-name-tag">${t.name}</div><div class="staff-role-tag">${t.role}</div>
-      </div>`;
-    }
-  });
-  html += `</div></div>`;
-  html += `<button class="btn-primary" id="btn-staff-to-dates" ${!SS.selectedTech?"disabled":""}>Continue</button>`;
-  return html;
-}
-
 function renderStaffReschedule() {
-  const DAY=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const dates = [];
-  for (let i = 1; i <= 60; i++) {
-    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+i);
-    dates.push({ iso: d.toISOString().slice(0,10), day: DAY[d.getDay()], num: d.getDate(), mon: MON[d.getMonth()] });
-  }
+  const dates = getDates(1);
   let html = `<button class="btn-ghost" id="back-staff-dates">← Back</button>`;
   html += `<div class="manage-card"><div class="section-heading">Choose new date & time</div>`;
   html += `<div class="date-strip">`;
@@ -2375,10 +1794,7 @@ function renderStaffReschedule() {
   } else {
     html += `<div class="slots-heading">${SS.slots.length} times available</div><div class="slot-grid">`;
     SS.slots.forEach(a => {
-      const d = new Date(a.start_at);
-      let h = d.getHours(), m = d.getMinutes();
-      const ampm = h < 12 ? "am" : "pm"; h = h > 12 ? h-12 : (h===0?12:h);
-      const lbl = h + ":" + String(m).padStart(2,"0") + ampm;
+      const lbl = fmtSlotLabel(a.start_at);
       const sel = SS.selectedSlot === a.start_at ? "selected" : "";
       html += `<button class="slot-btn ${sel}" data-staff-slot="${a.start_at}">${lbl}</button>`;
     });
@@ -2400,9 +1816,6 @@ function renderStaffDashboard() {
   const defStart = SS.dashboardStart || fmt(today);
   const defEnd   = SS.dashboardEnd   || fmt(new Date(today.getTime()+6*24*60*60*1000));
 
-  // Always show tech filter using known TEAM members (not dependent on search results)
-  const techOptions = TEAM.filter(t => !t.isAny).map(t => t.name);
-
   let html = `<button class="btn-ghost" id="back-dashboard">← Back</button>`;
   html += `<div class="manage-card">
     <div class="section-heading">Confirmation Dashboard</div>
@@ -2417,13 +1830,6 @@ function renderStaffDashboard() {
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-      <div class="form-group" style="margin-bottom:0;">
-        <label class="form-label">Nail tech</label>
-        <select id="dash-filter-tech" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white;">
-          <option value="">All techs</option>
-          ${techOptions.map(t => `<option value="${t}" ${SS.dashboardFilterTech===t?"selected":""}>${t}</option>`).join("")}
-        </select>
-      </div>
       <div class="form-group" style="margin-bottom:0;display:flex;align-items:flex-end;">
         <label class="notify-toggle" style="margin:0;">
           <input type="checkbox" id="dash-filter-confirmed" ${SS.dashboardFilterConfirmed?"checked":""}> Show confirmed
@@ -2437,9 +1843,6 @@ function renderStaffDashboard() {
 
   if (SS.dashboardData) {
     let appts = SS.dashboardData;
-
-    // Apply filters
-    if (SS.dashboardFilterTech) appts = appts.filter(a => a.tech === SS.dashboardFilterTech);
 
     const confirmed   = appts.filter(a => a.confirmed);
     const unconfirmed = appts.filter(a => !a.confirmed);
@@ -2456,14 +1859,13 @@ function renderStaffDashboard() {
       const border = isConf ? "#B7D7BE" : "#F5C6C2";
       const bg     = isConf ? "#F0FAF2"  : "#FFF5F5";
       const addonStr = a.addons ? `<span style="color:var(--accent);"> + ${a.addons}</span>` : "";
-      const techStr  = a.tech   ? `<span style="color:var(--ink-faint);"> · ${a.tech}</span>` : "";
       const phone    = a.phone  || "No phone";
       const optOut   = a.smsOptIn === "NO" ? ` <span style="color:var(--error);font-size:10px;">SMS opt-out</span>` : "";
       return `<div class="svc-row" style="border-color:${border};background:${bg};padding:10px 12px;gap:0;">
         <div style="flex:1;min-width:0;">
           <div class="svc-name" style="${isConf?"color:var(--success);":""}">${isConf?"✓ ":""}${a.name||"Unknown"}</div>
           <div class="svc-dur" style="margin-top:2px;">${a.appointmentDate}</div>
-          <div class="svc-dur" style="margin-top:1px;">${a.service||""}${addonStr}${techStr}</div>
+          <div class="svc-dur" style="margin-top:1px;">${a.service||""}${addonStr}</div>
           <div class="svc-dur" style="margin-top:1px;">${phone}${optOut}</div>
           <div class="svc-dur" style="font-family:monospace;font-size:10px;color:var(--ink-faint);margin-top:1px;">${a.bookingId}</div>
         </div>
@@ -2543,20 +1945,12 @@ function attachStaffEvents() {
   const cancel = document.getElementById("btn-staff-cancel");
   if (cancel) cancel.onclick = handleStaffCancel;
   const reschedule = document.getElementById("btn-staff-reschedule");
-  if (reschedule) reschedule.onclick = () => { SS.mode = "tech-pick"; SS.selectedTech = null; SS.selectedDate = null; SS.selectedSlot = null; SS.error = null; renderStaff(); };
+  if (reschedule) reschedule.onclick = () => { SS.mode = "reschedule"; SS.selectedDate = null; SS.selectedSlot = null; SS.slots = []; SS.error = null; renderStaff(); };
 
   const backStaff = document.getElementById("back-staff");
   if (backStaff) backStaff.onclick = () => { SS.mode = SS.previousMode || "lookup"; SS.error = null; renderStaff(); };
-  const backTech = document.getElementById("back-staff-tech");
-  if (backTech) backTech.onclick = () => { SS.mode = "found"; SS.error = null; renderStaff(); };
   const backDates = document.getElementById("back-staff-dates");
-  if (backDates) backDates.onclick = () => { SS.mode = "tech-pick"; SS.error = null; renderStaff(); };
-
-  document.querySelectorAll("[data-staff-tech]").forEach(el => {
-    el.onclick = () => { SS.selectedTech = TEAM.find(t => t.id === el.dataset.staffTech); renderStaff(); };
-  });
-  const toDates = document.getElementById("btn-staff-to-dates");
-  if (toDates) toDates.onclick = () => { SS.mode = "reschedule"; SS.error = null; renderStaff(); };
+  if (backDates) backDates.onclick = () => { SS.mode = "found"; SS.error = null; renderStaff(); };
 
   document.querySelectorAll("[data-staff-date]").forEach(el => {
     el.onclick = () => loadStaffSlots(el.dataset.staffDate);
@@ -2567,7 +1961,7 @@ function attachStaffEvents() {
   const confirmR = document.getElementById("btn-staff-confirm-reschedule");
   if (confirmR) confirmR.onclick = handleStaffReschedule;
   const another = document.getElementById("btn-staff-another");
-  if (another) another.onclick = () => { SS.mode = "lookup"; SS.booking = null; SS.bookingIdInput = ""; SS.error = null; SS.eligibleTechIds = null; renderStaff(); };
+  if (another) another.onclick = () => { SS.mode = "lookup"; SS.booking = null; SS.bookingIdInput = ""; SS.error = null; renderStaff(); };
 
   // Dashboard confirm buttons
   document.querySelectorAll("[data-dash-confirm]").forEach(el => {
@@ -2576,7 +1970,7 @@ function attachStaffEvents() {
       const bookingId = el.dataset.dashConfirm;
       el.disabled = true; el.textContent = "Saving…";
       try {
-        const r = await fetch(PROXY_BASE + "?path=/v2/staff/confirm", {
+        const r = await fetch(API_BASE + "?path=/staff/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ staffPassword: SS.password, bookingId }),
@@ -2603,7 +1997,7 @@ function attachStaffEvents() {
       e.stopPropagation();
       el.disabled = true; el.textContent = "Sending…";
       try {
-        const r = await fetch(PROXY_BASE + "?path=/v2/staff/send-reminder", {
+        const r = await fetch(API_BASE + "?path=/staff/send-reminder", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2638,7 +2032,7 @@ function attachStaffEvents() {
       const bookingId = el.dataset.dashManage;
       el.disabled = true; el.textContent = "Loading…";
       try {
-        const result = await staffPost("/v2/bookings/staff-lookup", { bookingId });
+        const result = await staffPost("/bookings/staff-lookup", { bookingId });
         if (result.booking) {
           SS.booking = result.booking; SS.token = result.token;
           SS.previousMode = "dashboard";   // remember to come back here
@@ -2665,8 +2059,6 @@ function attachStaffEvents() {
   if (dashEnd) dashEnd.onchange = e => { SS.dashboardEnd = e.target.value; };
   const dashFilterConf = document.getElementById("dash-filter-confirmed");
   if (dashFilterConf) dashFilterConf.onchange = e => { SS.dashboardFilterConfirmed = e.target.checked; renderStaff(); };
-  const dashFilterTechEl = document.getElementById("dash-filter-tech");
-  if (dashFilterTechEl) dashFilterTechEl.onchange = e => { SS.dashboardFilterTech = e.target.value; renderStaff(); };
   const loadDash = document.getElementById("btn-load-dashboard");
   if (loadDash) loadDash.onclick = async () => {
     SS.working = true; renderStaff();
@@ -2678,7 +2070,7 @@ function attachStaffEvents() {
     const endDate   = new Date(end   + "T00:00:00");
     // Fetch all appointments from sheet within range
     try {
-      const r = await fetch(PROXY_BASE + "?path=/v2/staff/dashboard", {
+      const r = await fetch(API_BASE + "?path=/staff/dashboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffPassword: SS.password, startDate: start, endDate: end }),
@@ -2693,7 +2085,6 @@ function attachStaffEvents() {
 // ─── BOOT ──────────────────────────────────────────────────────────────────
 // Check if this is a manage page load
 (async () => {
-  await loadTeamMembers();
   if (window.location.search.includes("staff")) {
     initStaffPage();
   } else if (window.location.search.includes("manage")) {
