@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 // ── Salon config ─────────────────────────────────────────────────────────────
 
 const SALON_NAME    = "Amour Nail Studio";
-const SALON_ADDRESS = "1514 W Ardmore Ave · Chicago, IL";
+const SALON_ADDRESS = "25 N Bishop St Apt 2 · Chicago, IL";
 const SALON_PHONE   = "(773) 543-6527";
 // TODO: switch to an amournailstudio.com address when the new domain is ready
 // (or set SALON_EMAIL in the Netlify environment variables).
@@ -301,7 +301,7 @@ function confirmationEmail({ booking, manageUrl }) {
         Questions? Call <a href="tel:7735436527" style="color:#6B6560;">${SALON_PHONE}</a> or reply to this email.
       </div>
     </div>`;
-  return emailShell(inner, `${SALON_NAME} · 1514 W Ardmore Ave, Chicago IL 60660`);
+  return emailShell(inner, `${SALON_NAME} · 25 N Bishop St Apt 2, Chicago IL 60607`);
 }
 
 function cancellationEmail({ booking, byStaff, siteUrl }) {
@@ -593,7 +593,12 @@ async function createBooking(store, payload, ctx) {
 
 export async function handleEvent(event) {
   const SECRET = process.env.MANAGE_TOKEN_SECRET;
-  if (!SECRET) return fail("MANAGE_TOKEN_SECRET not configured", 500);
+  const earlyPath = (event.queryStringParameters?.path || "").replace(/^\/v2(?=\/)/, "");
+  // Browsing open times and the staff password check don't use the signing secret;
+  // everything else (bookings, manage links, reminders) does.
+  if (!SECRET && earlyPath !== "/availability" && earlyPath !== "/staff/auth-check") {
+    return fail("Booking isn't set up yet: add the MANAGE_TOKEN_SECRET environment variable in Netlify and redeploy.", 500);
+  }
 
   const ctx = {
     secret:    SECRET,

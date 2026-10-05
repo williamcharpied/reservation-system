@@ -488,7 +488,7 @@
 
   <header class="salon-header">
     <div class="salon-name">Amour Nail Studio</div>
-    <div class="salon-sub">1514 W Ardmore Ave · Chicago, IL</div>
+    <div class="salon-sub">25 N Bishop St Apt 2 · Chicago, IL</div>
   </header>
 
   <div class="steps-bar" id="steps-bar"></div>
@@ -496,7 +496,7 @@
   <main id="main"></main>
 
   <footer class="page-footer">
-    Amour Nail Studio &nbsp;·&nbsp; (773) 543-6527 &nbsp;·&nbsp; bookings@monalizanails.com
+    Amour Nail Studio &nbsp;·&nbsp; (773) 543-6527
   </footer>
 </div>
 
@@ -815,7 +815,6 @@ function renderStep2() {
   if (showArt) {
     const arts = ADDONS.filter(a=>a.group==="art");
     html += `<div class="cat-label" style="margin-top:${allowedRemovals.length ? "1.25rem" : "0"};">Nail art</div>`;
-    html += '<div class="note">Select one nail art level — choosing a new level will replace your current selection.</div>';
     arts.forEach(a => {
       const sel = S.addons.find(x=>x.id===a.id) ? "selected" : "";
       html += `<div class="addon-row ${sel}" data-addon-art="${a.id}">
@@ -975,7 +974,7 @@ function renderSuccess() {
         </td></tr>
         <tr class="total"><td>Total</td><td>${totalDisplay()}</td></tr>
       </table>
-      <div style="font-size:13px;color:var(--ink-faint);margin-bottom:1.25rem;">1514 W Ardmore Ave, Chicago IL 60660<br>(773) 543-6527</div>
+      <div style="font-size:13px;color:var(--ink-faint);margin-bottom:1.25rem;">25 N Bishop St Apt 2, Chicago IL 60607<br>(773) 543-6527</div>
       ${policy.withinWindow
         ? `<div style="font-size:12px;color:#8B5E35;background:var(--accent-light);border:1px solid #E8D4BC;border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;margin-bottom:1rem;">⚠ This appointment cannot be canceled or rescheduled as the 24-hour cancellation window has passed. No-shows will be charged 50% of the service cost. Thank you for your understanding.</div>`
         : `<div style="font-size:12px;color:var(--ink-muted);background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;margin-bottom:1rem;">To cancel or reschedule, please contact us before <strong style="color:var(--ink)">${policy.deadline}</strong> at <a href="tel:7735436527" style="color:var(--ink);">(773) 543-6527</a> or <a href="mailto:bookings@monalizanails.com" style="color:var(--ink);">bookings@monalizanails.com</a>.</div>`
