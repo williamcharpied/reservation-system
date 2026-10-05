@@ -407,7 +407,6 @@
     align-items: center;
     flex-shrink: 0;
     margin-left: 6px;
-    z-index: 10;
   }
   .info-btn {
     width: 16px; height: 16px;
@@ -425,61 +424,50 @@
     transition: border-color 0.15s, color 0.15s;
     user-select: none;
   }
-  .info-wrap:hover .info-btn {
+  .info-wrap.open .info-btn {
     border-color: var(--accent);
     color: var(--accent);
   }
+  /* Positioned by JS (fixed to the viewport) so it never runs off the screen */
   .tooltip-box {
     display: none;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 220px;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 1000;
+    width: 260px;
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
     background: var(--ink);
     color: #F5F0EA;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.55;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-radius: 8px;
     pointer-events: none;
     font-family: 'DM Sans', sans-serif;
     font-weight: 400;
     letter-spacing: 0;
+    text-transform: none;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: break-word;
     box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   }
+  .info-wrap.open .tooltip-box { display: block; }
   .tooltip-box::after {
     content: '';
     position: absolute;
     top: 100%;
-    left: 50%;
+    left: var(--arrow-x, 50%);
     transform: translateX(-50%);
     border: 5px solid transparent;
     border-top-color: var(--ink);
   }
-  .info-wrap:hover .tooltip-box { display: block; }
-  /* On small screens, keep tooltip from going off left edge */
-  .svc-row .info-wrap .tooltip-box,
-  .addon-row .info-wrap .tooltip-box {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(220px, calc(100vw - 32px));
-    /* clamp so it never goes off either edge */
-    max-width: calc(100vw - 32px);
-  }
-  /* Use JS-free approach: anchor to right side when near left edge */
-  .svc-row .info-wrap .tooltip-box,
-  .addon-row .info-wrap .tooltip-box {
-    left: auto;
-    right: -8px;
-    transform: none;
-  }
-  .svc-row .info-wrap .tooltip-box::after,
-  .addon-row .info-wrap .tooltip-box::after {
-    left: auto;
-    right: 12px;
-    transform: none;
+  .tooltip-box.below::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: var(--ink);
   }
 </style>
 </head>
@@ -488,7 +476,7 @@
 
   <header class="salon-header">
     <div class="salon-name">Amour Nail Studio</div>
-    <div class="salon-sub">25 N Bishop St Apt 2 · Chicago, IL</div>
+    <div class="salon-sub">Liza Solovei</div>
   </header>
 
   <div class="steps-bar" id="steps-bar"></div>
@@ -974,7 +962,7 @@ function renderSuccess() {
         </td></tr>
         <tr class="total"><td>Total</td><td>${totalDisplay()}</td></tr>
       </table>
-      <div style="font-size:13px;color:var(--ink-faint);margin-bottom:1.25rem;">25 N Bishop St Apt 2, Chicago IL 60607<br>(773) 543-6527</div>
+      <div style="font-size:13px;color:var(--ink-faint);margin-bottom:1.25rem;">(773) 543-6527</div>
       ${policy.withinWindow
         ? `<div style="font-size:12px;color:#8B5E35;background:var(--accent-light);border:1px solid #E8D4BC;border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;margin-bottom:1rem;">⚠ This appointment cannot be canceled or rescheduled as the 24-hour cancellation window has passed. No-shows will be charged 50% of the service cost. Thank you for your understanding.</div>`
         : `<div style="font-size:12px;color:var(--ink-muted);background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;margin-bottom:1rem;">To cancel or reschedule, please contact us before <strong style="color:var(--ink)">${policy.deadline}</strong> at <a href="tel:7735436527" style="color:var(--ink);">(773) 543-6527</a> or <a href="mailto:bookings@monalizanails.com" style="color:var(--ink);">bookings@monalizanails.com</a>.</div>`
@@ -2080,6 +2068,62 @@ function attachStaffEvents() {
     SS.working = false; renderStaff();
   };
 }
+
+// ─── TOOLTIPS ──────────────────────────────────────────────────────────────
+// Tooltips are positioned in JS (fixed to the viewport) so they always stay fully
+// on screen with padding, even on narrow phones. Hover on desktop, tap on touch.
+function placeTooltip(btn, boxH, vw, vh) {
+  const MARGIN = 16, GAP = 10;
+  const width = Math.min(260, vw - MARGIN * 2);
+  const cx = btn.left + btn.width / 2;
+  const left = Math.max(MARGIN, Math.min(cx - width / 2, vw - width - MARGIN));
+  const roomAbove = btn.top - GAP - MARGIN;
+  const roomBelow = vh - btn.bottom - GAP - MARGIN;
+  let below;
+  if (boxH <= roomAbove) below = false;
+  else if (boxH <= roomBelow) below = true;
+  else below = roomBelow > roomAbove;
+  const top = below ? btn.bottom + GAP : btn.top - GAP - boxH;
+  const arrowX = Math.max(14, Math.min(cx - left, width - 14));
+  return { width, left, top, below, arrowX };
+}
+
+(function initTooltips() {
+  let openWrap = null;
+  const hide = () => { if (openWrap) { openWrap.classList.remove("open"); openWrap = null; } };
+  function show(wrap) {
+    hide();
+    const box = wrap.querySelector(".tooltip-box"), btn = wrap.querySelector(".info-btn");
+    openWrap = wrap;
+    wrap.classList.add("open");                       // display:block so it can be measured
+    const vw = document.documentElement.clientWidth;
+    box.style.width = Math.min(260, vw - 32) + "px";
+    const p = placeTooltip(btn.getBoundingClientRect(), box.offsetHeight, vw, window.innerHeight);
+    box.style.left = p.left + "px";
+    box.style.top = p.top + "px";
+    box.classList.toggle("below", p.below);
+    box.style.setProperty("--arrow-x", p.arrowX + "px");
+  }
+  const canHover = window.matchMedia && window.matchMedia("(hover: hover)").matches;
+  if (canHover) {
+    document.addEventListener("mouseover", e => {
+      const w = e.target.closest && e.target.closest(".info-wrap");
+      if (w) { if (w !== openWrap) show(w); } else hide();
+    });
+  } else {
+    // Capture phase: the "i" button stops click propagation so it doesn't select the row
+    document.addEventListener("click", e => {
+      const w = e.target.closest && e.target.closest(".info-wrap");
+      if (!w) return hide();
+      openWrap === w ? hide() : show(w);
+    }, true);
+    document.addEventListener("touchstart", e => {
+      if (!(e.target.closest && e.target.closest(".info-wrap"))) hide();
+    }, { passive: true });
+  }
+  window.addEventListener("scroll", hide, true);
+  window.addEventListener("resize", hide);
+})();
 
 // ─── BOOT ──────────────────────────────────────────────────────────────────
 // Check if this is a manage page load
