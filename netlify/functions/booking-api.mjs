@@ -9,6 +9,13 @@ const SALON_PHONE   = "(773) 543-6527";
 // (or set SALON_EMAIL in the Netlify environment variables).
 const SALON_EMAIL   = process.env.SALON_EMAIL || "bookings@monalizanails.com";
 const FROM_EMAIL    = SALON_NAME + " <" + SALON_EMAIL + ">";
+const SALON_LOCATION = "25 N Bishop St Apt 2, Chicago, IL 60607";
+
+// Liza (nail tech / owner). Gets her own copy of every customer email (with a calendar
+// invite attached) and a text message for every new, changed or cancelled appointment.
+const OWNER_NAME   = "Liza Solovei";
+const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "lizasolovey89@gmail.com";
+const NOTIFY_PHONE = process.env.NOTIFY_PHONE || "7735436527";
 
 // ── Availability (hardcoded) ─────────────────────────────────────────────────
 // Open Sunday and Monday, 10:00 AM – 6:00 PM Chicago time.
@@ -212,17 +219,22 @@ function digitsOnly(s) { return (s || "").replace(/\D/g, ""); }
 
 function firstNameOf(name) { return name ? String(name).trim().split(/\s+/)[0] : "there"; }
 
-async function sendEmail(resendKey, { from, to, subject, html }) {
+async function sendEmail(resendKey, { from, to, subject, html, attachments }) {
   if (!resendKey) return null;
+  const payload = { from, to, subject, html };
+  if (attachments && attachments.length) payload.attachments = attachments;
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { "Authorization": "Bearer " + resendKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify(payload),
   });
-  return r.json();
+  const result = await r.json();
+  if (result && result.statusCode >= 400) {
+    console.error("Resend error:", result.statusCode, result.name, result.message);
+  }
+  return result;
 }
 
-// Optional write-only log to a Google Sheet (Apps Script web app)
 async function writeToSheet(scriptUrl, data) {
   if (!scriptUrl) return;
   try {
@@ -239,6 +251,108 @@ async function writeToSheet(scriptUrl, data) {
     if (e.name === "AbortError") console.error("Sheet write timed out (>4s):", data.sheet);
     else console.error("Sheet write error:", e.message);
   }
+}
+
+// ── Calendar invites (.ics) ──────────────────────────────────────────────────
+
+function icsEscape(text) {
+  return String(text == null ? "" : text)
+    .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+
+// RFC 5545: lines are limited to 75 octets; continuation lines start with a space.
+// Never split in the middle of a multi-byte UTF-8 character.
+function icsFold(line) {
+  const bytes = Buffer.from(line, "utf8");
+  if (bytes.length <= 75) return line;
+  const parts = [];
+  let start = 0, limit = 75;
+  while (start < bytes.length) {
+    let end = Math.min(start + limit, bytes.length);
+    while (end < bytes.length && (bytes[end] & 0xC0) === 0x80) end--;
+    parts.push(bytes.subarray(start, end).toString("utf8"));
+    start = end;
+    limit = 74;   // the leading space counts toward the 75
+  }
+  return parts.join("\r\n ");
+}
+
+function icsDate(ms) {
+  return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function icsParam(text) { return String(text || "").replace(/["\r\n]/g, ""); }
+
+// method: "REQUEST" (new or updated appointment) or "CANCEL".
+// The UID stays the same for the life of a booking and SEQUENCE goes up with every change,
+// so Apple Calendar / Google Calendar / Outlook update or remove the existing event
+// instead of adding a duplicate.
+function buildIcs(booking, { method, forOwner, manageUrl }) {
+  const startMs = Date.parse(booking.start_at);
+  const endMs   = startMs + booking.duration_minutes * 60000;
+  const cancelled = method === "CANCEL";
+  const addonText = booking.addons.length ? booking.addons.map(a => a.name).join(", ") : "None";
+  const attendee  = forOwner ? { name: OWNER_NAME, email: NOTIFY_EMAIL } : { name: booking.name, email: booking.email };
+
+  const summary = forOwner
+    ? `${booking.name} – ${booking.service.name}`
+    : `${SALON_NAME} – ${booking.service.name}`;
+  const description = forOwner
+    ? [`Client: ${booking.name}`, `Phone: ${booking.phone}`, `Email: ${booking.email}`,
+       `Service: ${booking.service.name}`, `Add-ons: ${addonText}`, `Booking ID: ${booking.id}`].join("\n")
+    : [`Service: ${booking.service.name}`, `Add-ons: ${addonText}`, `Booking ID: ${booking.id}`,
+       ...(manageUrl && !cancelled ? [`Cancel or reschedule: ${manageUrl}`] : [])].join("\n");
+
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Amour Nail Studio//Booking//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:" + method,
+    "BEGIN:VEVENT",
+    "UID:" + booking.id + "@amournailstudio.booking",
+    "DTSTAMP:" + icsDate(Date.now()),
+    "SEQUENCE:" + (booking.seq || 0),
+    "DTSTART:" + icsDate(startMs),
+    "DTEND:" + icsDate(endMs),
+    "SUMMARY:" + icsEscape(cancelled ? "Cancelled: " + summary : summary),
+    "DESCRIPTION:" + icsEscape(description),
+    "LOCATION:" + icsEscape(SALON_LOCATION),
+    "STATUS:" + (cancelled ? "CANCELLED" : "CONFIRMED"),
+    "TRANSP:" + (cancelled ? "TRANSPARENT" : "OPAQUE"),
+    `ORGANIZER;CN="${icsParam(SALON_NAME)}":mailto:${SALON_EMAIL}`,
+    `ATTENDEE;CN="${icsParam(attendee.name)}";ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE:mailto:${attendee.email}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  return lines.map(icsFold).join("\r\n") + "\r\n";
+}
+
+// Sends one customer email, plus a separate (not cc/bcc) copy to Liza. Each message carries
+// its own calendar invite. `toCustomer: false` sends Liza's copy only (staff made a change
+// and chose not to notify the customer, but Liza's calendar still needs to stay accurate).
+async function sendEmailWithCopy(ctx, booking, { subject, html, method, manageUrl, toCustomer }) {
+  const recipients = [];
+  if (toCustomer && booking.email) recipients.push({ to: booking.email, forOwner: false });
+  const sameAddress = (booking.email || "").trim().toLowerCase() === NOTIFY_EMAIL.toLowerCase();
+  if (NOTIFY_EMAIL && !(toCustomer && sameAddress)) recipients.push({ to: NOTIFY_EMAIL, forOwner: true });
+
+  await Promise.all(recipients.map(async ({ to, forOwner }) => {
+    const content = Buffer.from(buildIcs(booking, { method, forOwner, manageUrl }), "utf8").toString("base64");
+    // If the email service rejects the attachment for any reason, retry with a plainer one,
+    // then without it, so a calendar problem can never stop the email itself.
+    const variants = [
+      [{ filename: "appointment.ics", content, content_type: `text/calendar; charset=utf-8; method=${method}` }],
+      [{ filename: "appointment.ics", content }],
+      [],
+    ];
+    for (const attachments of variants) {
+      try {
+        const result = await sendEmail(ctx.resendKey, { from: FROM_EMAIL, to: [to], subject, html, attachments });
+        if (!result || !(result.statusCode >= 400)) return;
+      } catch (e) { console.error("Email send failed:", e.message); }
+    }
+  }));
 }
 
 function emailShell(inner, footer) {
@@ -328,19 +442,6 @@ function rescheduleEmail({ booking, manageUrl, byStaff }) {
   return emailShell(inner, CONTACT_FOOTER);
 }
 
-function addonAlertEmail({ booking, addonList, dateStr }) {
-  return `<div style="font-family:sans-serif;max-width:480px;color:#1A1714;">
-    <h2 style="margin-bottom:4px;">📋 Add-On Booking Alert</h2>
-    <p style="color:#6B6560;margin-top:0;">A customer booked add-on services. Please confirm pricing and timing.</p>
-    <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">
-      <tr><td style="padding:8px 0;border-bottom:1px solid #E8E3DC;color:#6B6560;width:120px;">Booking ID</td><td style="padding:8px 0;border-bottom:1px solid #E8E3DC;">${booking.id}</td></tr>
-      <tr><td style="padding:8px 0;border-bottom:1px solid #E8E3DC;color:#6B6560;">Customer</td><td style="padding:8px 0;border-bottom:1px solid #E8E3DC;">${esc(booking.name)}</td></tr>
-      <tr><td style="padding:8px 0;border-bottom:1px solid #E8E3DC;color:#6B6560;">Date & Time</td><td style="padding:8px 0;border-bottom:1px solid #E8E3DC;">${dateStr}</td></tr>
-      <tr><td style="padding:8px 0;color:#6B6560;">Add-Ons</td><td style="padding:8px 0;font-weight:600;color:#C4956A;">${esc(addonList)}</td></tr>
-    </table>
-  </div>`;
-}
-
 // ── Twilio SMS helpers ───────────────────────────────────────────────────────
 
 async function sendSMS(to, body) {
@@ -382,6 +483,17 @@ function smsCancelText(dateStr, siteUrl) {
 
 function smsRescheduleText(newDateStr, manageUrl) {
   return `${SALON_NAME}: Appt rescheduled to ${newDateStr}. Manage: ${manageUrl}`;
+}
+
+function ownerSummary(booking) {
+  const addons = booking.addons.length ? " + " + booking.addons.map(a => a.name).join(", ") : "";
+  return `${booking.name} · ${booking.service.name}${addons} · ${booking.phone}`;
+}
+
+async function textOwner(text) {
+  if (!NOTIFY_PHONE) return;
+  try { await sendSMS(NOTIFY_PHONE, `${SALON_NAME}: ${text}`); }
+  catch (e) { console.error("Owner SMS failed (non-fatal):", e.message); }
 }
 
 function smsReminderText(customerName, dateStr, manageUrl) {
@@ -458,6 +570,7 @@ async function moveBooking(store, existing, newStartAt) {
     ...existing,
     start_at: new Date(startMs).toISOString(),
     confirmed: false, reminderSent: null,
+    seq: (existing.seq || 0) + 1,
     updated_at: new Date().toISOString(),
   };
   await saveBooking(store, updated, previousDay);
@@ -465,40 +578,46 @@ async function moveBooking(store, existing, newStartAt) {
 }
 
 async function cancelBooking(store, existing, status) {
-  const updated = { ...existing, status, updated_at: new Date().toISOString() };
+  const updated = { ...existing, status, seq: (existing.seq || 0) + 1, updated_at: new Date().toISOString() };
   await saveBooking(store, updated, null);
   return updated;
 }
 
-async function notifyCancelled(booking, byStaff, ctx) {
+// `notifyCustomer: false` (staff change with the notify box unchecked) skips the customer's
+// email and text; Liza's copy and text always go out.
+async function notifyCancelled(booking, byStaff, ctx, notifyCustomer = true) {
   const dateStr = fmtChicago(booking.start_at);
-  if (booking.phone) {
+  if (notifyCustomer && booking.phone) {
     await sendSMS(booking.phone, smsCancelText(dateStr, ctx.siteUrl))
       .catch(e => console.error("Cancel SMS failed:", e.message));
   }
-  if (booking.email) {
-    await sendEmail(ctx.resendKey, {
-      from: FROM_EMAIL, to: [booking.email],
+  await Promise.all([
+    sendEmailWithCopy(ctx, booking, {
       subject: "Appointment Cancelled – " + SALON_NAME,
       html: cancellationEmail({ booking, byStaff, siteUrl: ctx.siteUrl }),
-    }).catch(() => {});
-  }
+      method: "CANCEL", toCustomer: notifyCustomer,
+    }).catch(e => console.error("Cancel email failed:", e.message)),
+    textOwner(`Appointment cancelled${byStaff ? " (by staff)" : " (by customer)"}\n${dateStr}\n${ownerSummary(booking)}`),
+  ]);
 }
 
-async function notifyRescheduled(booking, byStaff, ctx) {
+async function notifyRescheduled(booking, byStaff, ctx, { notifyCustomer = true, previousStartAt } = {}) {
   const dateStr = fmtChicago(booking.start_at);
   const manageUrl = ctx.siteUrl + "?manage=" + makeManageToken(booking.id, ctx.secret);
-  if (booking.phone) {
+  if (notifyCustomer && booking.phone) {
     await sendSMS(booking.phone, smsRescheduleText(dateStr, manageUrl))
       .catch(e => console.error("Reschedule SMS failed:", e.message));
   }
-  if (booking.email) {
-    await sendEmail(ctx.resendKey, {
-      from: FROM_EMAIL, to: [booking.email],
+  await Promise.all([
+    sendEmailWithCopy(ctx, booking, {
       subject: "Appointment Rescheduled – " + SALON_NAME,
       html: rescheduleEmail({ booking, manageUrl, byStaff }),
-    }).catch(() => {});
-  }
+      method: "REQUEST", manageUrl, toCustomer: notifyCustomer,
+    }).catch(e => console.error("Reschedule email failed:", e.message)),
+    textOwner(`Appointment changed${byStaff ? " (by staff)" : " (by customer)"}\n` +
+      (previousStartAt ? `Was: ${fmtChicago(previousStartAt)}\n` : "") +
+      `Now: ${dateStr}\n${ownerSummary(booking)}`),
+  ]);
 }
 
 async function createBooking(store, payload, ctx) {
@@ -519,7 +638,7 @@ async function createBooking(store, payload, ctx) {
     addons: val.addons,
     name: val.name, email: val.email, phone: val.phone,
     smsOptIn: val.smsOptIn,
-    confirmed: false, reminderSent: null,
+    confirmed: false, reminderSent: null, seq: 0,
     created_at: nowIso, updated_at: nowIso,
   };
   await saveBooking(store, booking, null);
@@ -542,14 +661,16 @@ async function createBooking(store, payload, ctx) {
   const manageUrl = ctx.siteUrl + "?manage=" + makeManageToken(booking.id, ctx.secret);
   const addonList = booking.addons.map(a => a.name).join(", ");
 
-  // 1. Confirmation email (fast, critical for the customer)
-  try {
-    await sendEmail(ctx.resendKey, {
-      from: FROM_EMAIL, to: [booking.email],
+  // 1. Confirmation email to the customer, plus Liza's own copy (both with a calendar invite),
+  //    and a text to Liza. Run together so the customer isn't kept waiting.
+  await Promise.all([
+    sendEmailWithCopy(ctx, booking, {
       subject: "Appointment Confirmed – " + SALON_NAME,
       html: confirmationEmail({ booking, manageUrl }),
-    });
-  } catch (e) { console.error("Email error:", e.message); }
+      method: "REQUEST", manageUrl, toCustomer: true,
+    }).catch(e => console.error("Email error:", e.message)),
+    textOwner(`New appointment\n${dateStr}\n${ownerSummary(booking)}`),
+  ]);
 
   // 2. Optional log to Google Sheet
   if (ctx.scriptUrl) {
@@ -568,22 +689,11 @@ async function createBooking(store, payload, ctx) {
     ]);
   }
 
-  // 3. SMS confirmation (never blocks or fails the booking)
+  // 3. SMS confirmation to the customer (never blocks or fails the booking)
   if (booking.smsOptIn && booking.phone) {
     try {
       await sendSMS(booking.phone, smsConfirmationText(dateStr, booking.service.name));
     } catch (e) { console.error("SMS confirmation failed (non-fatal):", e.message); }
-  }
-
-  // 4. Add-on alert to the salon
-  if (booking.addons.length) {
-    try {
-      await sendEmail(ctx.resendKey, {
-        from: SALON_NAME + " Booking <" + SALON_EMAIL + ">", to: [SALON_EMAIL],
-        subject: `Add-On Booking: ${addonList} — ${dateStr}`,
-        html: addonAlertEmail({ booking, addonList, dateStr }),
-      });
-    } catch (e) { console.error("Addon alert error:", e.message); }
   }
 
   return json({ booking });
@@ -721,7 +831,7 @@ export async function handleEvent(event) {
     }
     const moved = await moveBooking(store, existing, body.newStartAt);
     if (moved.error) return fail(moved.error);
-    await notifyRescheduled(moved.booking, false, ctx);
+    await notifyRescheduled(moved.booking, false, ctx, { previousStartAt: existing.start_at });
     await writeToSheet(ctx.scriptUrl, {
       sheet: "Appointments", action: "update", bookingId: moved.booking.id,
       status: "Rescheduled", appointmentDate: fmtChicago(moved.booking.start_at),
@@ -777,7 +887,7 @@ export async function handleEvent(event) {
     if (existing.status !== "BOOKED") return fail("This appointment is already cancelled.");
     const updated = await cancelBooking(store, existing, "CANCELLED_BY_SELLER");
     await writeToSheet(ctx.scriptUrl, { sheet: "Appointments", action: "update", bookingId: updated.id, status: "Cancelled (Staff)" });
-    if (body.notifyCustomer) await notifyCancelled(updated, true, ctx);
+    await notifyCancelled(updated, true, ctx, !!body.notifyCustomer);
     return json({ success: true });
   }
 
@@ -791,7 +901,7 @@ export async function handleEvent(event) {
       sheet: "Appointments", action: "update", bookingId: moved.booking.id,
       status: "Rescheduled (Staff)", appointmentDate: fmtChicago(moved.booking.start_at),
     });
-    if (body.notifyCustomer) await notifyRescheduled(moved.booking, true, ctx);
+    await notifyRescheduled(moved.booking, true, ctx, { notifyCustomer: !!body.notifyCustomer, previousStartAt: existing.start_at });
     return json({ success: true, booking: moved.booking });
   }
 
@@ -847,5 +957,5 @@ export default async (req) => {
 // Exposed for tests only
 export const _internals = {
   setStoreFactory(fn) { storeFactory = fn; },
-  chicagoToUtcMs, chicagoDateStr, slotStartsForDate, isSlotFree,
+  chicagoToUtcMs, chicagoDateStr, slotStartsForDate, isSlotFree, buildIcs, icsFold,
 };
